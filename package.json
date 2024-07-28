@@ -1,0 +1,59 @@
+{
+  "name": "multiviewer-for-mycanal",
+  "version": "1.0.0-beta1",
+  "main": "dist-electron/main/index.js",
+  "description": "Watch many channels at the same time from myCanal",
+  "author": "Quentin Baguette",
+  "license": "MIT",
+  "private": true,
+  "debug": {
+    "env": {
+      "VITE_DEV_SERVER_URL": "http://127.0.0.1:7777/"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && electron-builder",
+    "preview": "vite preview",
+    "pree2e": "vite build --mode=test",
+    "e2e": "playwright test",
+    "lint": "eslint src/ electron/ e2e/ --fix",
+    "sign:widevine": "python3 -m castlabs_evs.vmp sign-pkg node_modules/electron/dist"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.13.0",
+    "@emotion/styled": "^11.13.0",
+    "@mui/icons-material": "^5.16.5",
+    "@mui/material": "^5.16.5",
+    "axios": "^1.7.2",
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.1.8",
+    "react-router-dom": "^6.25.1",
+    "rx-player": "^4.1.0",
+    "swr": "^2.2.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.8.0",
+    "@playwright/test": "^1.42.1",
+    "@types/react": "^18.2.64",
+    "@types/react-dom": "^18.2.21",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.18",
+    "electron-builder": "^24.13.3",
+    "electron": "github:castlabs/electron-releases#v30.3.0+wvcus",
+    "eslint": "8.x",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react": "^7.35.0",
+    "globals": "^15.8.0",
+    "prettier": "^3.3.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.4.2",
+    "typescript-eslint": "^7.17.0",
+    "vite": "^5.1.5",
+    "vite-plugin-electron": "^0.28.4",
+    "vite-plugin-electron-renderer": "^0.14.5"
+  }
+}
