@@ -3,14 +3,13 @@ import {
   BrowserWindow,
   shell,
   ipcMain,
-  components,
   protocol,
   session
 } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import os from "node:os";
-import myCANAL from "./utils/myCANAL";
+import nineNow from "./utils/9now";
 import config from "./utils/config";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -66,7 +65,7 @@ let win: BrowserWindow | null = null;
 const preload = path.join(__dirname, "../preload/index.mjs");
 const indexHtml = path.join(RENDERER_DIST, "index.html");
 
-const ipc = [myCANAL, config];
+const ipc = [nineNow, config];
 
 for (const api of ipc) {
   api();
@@ -119,15 +118,17 @@ export const userAgent =
       : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.134 Safari/537.36";
 
 app.whenReady().then(async () => {
-  await components.whenReady();
-  console.log("components ready:", components.status());
-
   session.defaultSession.webRequest.onBeforeSendHeaders(
     {
       urls: [
-        "https://*.canalplus.pro/*",
-        "https://*.canalplustech.pro/*",
-        "https://*.canalplus-cdn.net/*"
+        "https://9now.com.au/*",
+        "https://*.9now.com.au/*",
+        "https://akamaized.net/*",
+        "https://*.akamaized.net/*",
+        "https://brightcove.com/*",
+        "https://*.brightcove.com/*",
+        "https://yospace.com/*",
+        "https://*.yospace.com/*"
       ]
     },
     (details, callback) => {
@@ -136,9 +137,9 @@ app.whenReady().then(async () => {
       callback({
         requestHeaders: {
           ...headers,
-          referer: "https://www.canalplus.com/",
-          Origin: "https://www.canalplus.com",
-          "Sec-Fetch-Site": "cross-site",
+          referer: "https://www.9now.com.au/",
+          Origin: "https://www.9now.com.au",
+          "Sec-Fetch-Site": "same-site",
           "User-Agent": userAgent,
           Dnt: "1"
           // Cookie: [authCookie, Cookie, cookie]

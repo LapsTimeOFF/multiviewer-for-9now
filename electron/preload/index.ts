@@ -1,6 +1,6 @@
 import { ipcRenderer, contextBridge } from "electron";
-import { Catalogs } from "shared/catalogTypes";
-import { ConfigSchema, OutData } from "shared/types";
+import { GetLiveExperience } from "shared/getLiveExperienceTypes";
+import { ConfigSchema } from "shared/configType";
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld("ipcRenderer", {
@@ -25,11 +25,9 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
 });
 
 export const api = {
-  mycanal: {
-    initLiveTV: (tokenPass: string): Promise<OutData> =>
-      ipcRenderer.invoke("mycanal:initLiveTV", tokenPass),
-    getCatalog: (url?: string): Promise<Catalogs> =>
-      ipcRenderer.invoke("mycanal:getCatalog", url)
+  "9now": {
+    getLiveExperience: (token: string): Promise<GetLiveExperience> =>
+      ipcRenderer.invoke("9now:getLiveExperience", token)
   },
   config: {
     set: (key: keyof ConfigSchema, value: unknown) => {

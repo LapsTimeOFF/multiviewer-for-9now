@@ -2,46 +2,32 @@ import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
-  ButtonGroup,
   CircularProgress,
   Container,
-  Grid,
   Snackbar,
   TextField,
   Typography
 } from "@mui/material";
 import "../styles/App.css";
-import { Channel as ChannelType, ConfigSchema, OutData } from "shared/types";
+import { ConfigSchema } from "shared/configType";
+import { GetLiveExperience } from "../../shared/getLiveExperienceTypes";
+import { JSONTree } from "react-json-tree";
 import Channel from "@/components/Channel";
-import { Channel as CatalogChannels } from "shared/catalogTypes";
+import LiveEventGroup from "@/components/LiveEventGroup";
 
 function App() {
-  const [passToken, setPassToken] = useState("");
-  const [userKeyId, setUserKeyId] = useState("");
-  const [deviceKeyId, setDeviceKeyId] = useState("");
+  const [token, setToken] = useState("");
   const [open, setOpen] = useState(false);
-  const [config, setConfig] = useState<ConfigSchema>({});
   const [loading, setLoading] = useState(true);
-  const [initTV, setInitTV] = useState<OutData | undefined>(undefined);
-  const [categories, setCategories] = useState<
-    | {
-        id: string;
-        displayName: string;
-        url: string;
-        adult?: boolean;
-      }[]
-    | undefined
-  >(undefined);
-  const [category, setCategory] = useState<string | undefined>(undefined);
-  const [channelsInCategory, setChannelsInCategory] = useState<
-    CatalogChannels[]
-  >([]);
-  const [channels, setChannels] = useState<ChannelType[]>([]);
+
+  const [config, setConfig] = useState<ConfigSchema>({});
+  const [liveExperience, setLiveExperience] = useState<GetLiveExperience>();
 
   useEffect(() => {
     const fetchConfig = async () => {
       const res = await window.mv.config.get();
       setConfig(res);
+
       setLoading(false);
     };
 
@@ -49,114 +35,47 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!category) return;
-    if (!config.RMUToken) return;
+    const fetchLiveExperience = async () => {
+      if (!config.token) return;
 
-    const fetchChannels = async () => {
-      const res = await window.mv.mycanal.getCatalog(
-        categories?.find((r) => r.id === category)?.url
-      );
+      const data = (await (
+        await fetch(
+          `https://api.9now.com.au/web/live-experience?device=web&slug=gem&streamParams=web%2Cchrome%2Cmacos&region=nsw&offset=0&token=${config.token}`
+        )
+      ).json()) as GetLiveExperience;
 
-      if (!res.channels) return;
+      console.log(data);
 
-      setChannelsInCategory(res.channels);
-    };
-
-    fetchChannels();
-  }, [category, config.RMUToken]);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      if (!config.RMUToken) return;
-      const res = await window.mv.mycanal.getCatalog();
-
-      setCategories(
-        res.rubriques?.map((r) => ({
-          id: r.idRubrique,
-          displayName: r.displayName,
-          url: r.URLPage,
-          adult: r.adult
-        }))
-      );
-    };
-
-    fetchCategories();
-  }, [config.RMUToken]);
-
-  useEffect(() => {
-    const fetchInitTV = async () => {
-      if (!config.passToken) return;
-      const res = await window.mv.mycanal.initLiveTV(config.passToken);
-      setInitTV(res);
-
-      if (!res) {
-        // passToken expired
-        window.mv.config.remove("passToken");
-        setConfig({ ...config, passToken: undefined });
-        return;
+      if (!data.data) {
+        window.mv.config.set("token", "");
+        window.location.reload();
       }
 
-      const channelGroup = res.PDS.ChannelsGroups.ChannelsGroup;
-      const channels = channelGroup.map((g) => g.Channels).flat();
-      setChannels(channels);
-
-      window.mv.config.set("RMUToken", res.RMUToken);
-      window.mv.config.set("LiveToken", res.LiveToken);
+      setLiveExperience(data);
     };
 
-    fetchInitTV();
-  }, [config.passToken]);
+    fetchLiveExperience();
+  }, [config.token]);
 
-  const handleClick = () => {
-    setOpen(true);
-  };
-
-  const handleClose = (
-    event: React.SyntheticEvent | Event,
-    reason?: string
-  ) => {
-    if (reason === "clickaway") {
-      return;
-    }
-
-    setOpen(false);
-  };
-
-  if (!config.passToken || !config.userKeyId || !config.deviceKeyId)
+  if (!config.token)
     return (
-      <>
+      <Container>
         <TextField
-          label="passToken"
+          label="token"
           variant="outlined"
-          value={passToken}
+          value={token}
+          fullWidth
           onChange={(e) => {
-            setPassToken(e.target.value);
-          }}
-        />
-        <TextField
-          label="oneplayer:user:usr"
-          variant="outlined"
-          value={userKeyId}
-          onChange={(e) => {
-            setUserKeyId(e.target.value);
-          }}
-        />
-        <TextField
-          label="oneplayer:user:dev"
-          variant="outlined"
-          value={deviceKeyId}
-          onChange={(e) => {
-            setDeviceKeyId(e.target.value);
+            setToken(e.target.value);
           }}
         />
         <Button
           onClick={() => {
-            window.mv.config.set("passToken", passToken);
-            window.mv.config.set("userKeyId", userKeyId);
-            window.mv.config.set("deviceKeyId", deviceKeyId);
-            handleClick();
+            window.mv.config.set("token", token);
+            setOpen(true);
           }}
           variant="outlined"
+          fullWidth
           color="success"
         >
           Save
@@ -164,13 +83,20 @@ function App() {
         <Snackbar
           open={open}
           autoHideDuration={6000}
-          onClose={handleClose}
+          onClose={(event: React.SyntheticEvent | Event, reason?: string) => {
+            if (reason === "clickaway") {
+              return;
+            }
+
+            setOpen(false);
+            location.reload();
+          }}
           message="Token saved."
         />{" "}
-      </>
+      </Container>
     );
 
-  if (loading || !initTV || !categories) {
+  if (loading || !liveExperience) {
     return (
       <Container>
         <Typography variant="h2">
@@ -182,25 +108,9 @@ function App() {
 
   return (
     <Container>
-      <Typography variant="h2">App</Typography>
-
-      <ButtonGroup variant="text">
-        {categories
-          .filter((r) => {
-            // remove adult category and Favoris
-            return !r.adult && r.displayName !== "Favoris";
-          })
-          .map((c) => (
-            <Button
-              key={c.id}
-              onClick={() => {
-                setCategory(c.id);
-              }}
-            >
-              {c.displayName}
-            </Button>
-          ))}
-      </ButtonGroup>
+      <Typography variant="h3" textAlign={"center"}>
+        Welcome back!
+      </Typography>
 
       <Box
         sx={{
@@ -210,28 +120,35 @@ function App() {
           mt: 2
         }}
       >
-        <Grid container spacing={2}>
-          {channelsInCategory &&
-            channelsInCategory.length > 0 &&
-            channelsInCategory.map((channel) => {
-              const TVChannel = channels.find(
-                (c) => c.EpgId === channel.epgID.toString()
-              );
+        <JSONTree data={{ config, liveExperience }} />
 
-              if (!TVChannel) {
-                console.log(`no TVChannel found for ${channel.Name}`);
-                return;
-              }
+        {liveExperience?.data.getLXP.switcherRail
+          .filter((r) => r.type === "channel")
+          .sort((a, b) => {
+            if (a.name < b.name) {
+              return -1;
+            }
+            if (a.name > b.name) {
+              return 1;
+            }
+            return 0;
+          })
+          .map((r) => <Channel channel={r} key={r.id} />)}
 
-              return (
-                <Channel
-                  key={channel.epgID}
-                  channel={channel}
-                  TVChannel={TVChannel}
-                />
-              );
-            })}
-        </Grid>
+        {liveExperience?.data.getLXP.switcherRail
+          .filter((r) => r.type === "live-event-group")
+          .sort((a, b) => {
+            if (a.name < b.name) {
+              return -1;
+            }
+            if (a.name > b.name) {
+              return 1;
+            }
+            return 0;
+          })
+          .map((r) => (
+            <LiveEventGroup switcherRail={r} key={r.id} config={config} />
+          ))}
       </Box>
     </Container>
   );

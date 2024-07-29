@@ -1,139 +1,86 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useRef } from "react";
-import RxPlayer from "rx-player";
-import { useParams } from "react-router-dom";
-import { ConfigSchema, ManifestList } from "shared/types";
+
+// ? This player is the live-event-group player
+
 import axios from "axios";
+import React, { useEffect, useRef } from "react";
+import { useParams } from "react-router-dom";
+// @ts-expect-error Types are just non existant
+import muxjs from "mux.js";
+import "shaka-player/dist/controls.css";
+import shaka from "shaka-player/dist/shaka-player.ui.debug";
+import { BrightcoveGetStream } from "shared/BrightcoveGetStream";
+import { LXPStream } from "shared/LXPStream";
 
-export function bytesToStr(bytes: Uint8Array): string {
-  return String.fromCharCode.apply(null, bytes as unknown as number[]);
-}
+async function initPlayer(manifestUri: string, video: HTMLVideoElement) {
+  shaka.polyfill.installAll();
 
-async function initPlayer(
-  manifestURL: string,
-  config: ConfigSchema,
-  epgId: string,
-  videoElement: HTMLVideoElement
-) {
-  if (!videoElement) return;
+  shaka.dependencies.add(shaka.dependencies.Allowed.muxjs, muxjs);
 
-  if (window.player) {
-    console.log("Disposing previous player instance");
-    window.player.dispose();
-    window.player = null;
-  }
+  const player = new shaka.Player();
+  await player.attach(video);
 
-  console.log("Initializing new player instance");
-  const player = new RxPlayer({
-    videoElement
-  });
-
-  // Attaching the player instance to the window for debugging purposes
   window.player = player;
 
-  const getLicense = async (challenge: Uint8Array) => {
-    console.log("Received Widevine Challenge (Uint8Array):", challenge);
-
-    const challengeStr = bytesToStr(challenge);
-    console.log("Converted Widevine Challenge (String):", challengeStr);
-    console.log("Converted Widevine Challenge (Base64):", btoa(challengeStr));
-
-    const body = {
-      ServiceRequest: {
-        InData: {
-          EpgId: epgId,
-          LiveToken: config.LiveToken,
-          UserKeyId: config.userKeyId,
-          DeviceKeyId: config.deviceKeyId,
-          ChallengeInfo: btoa(challengeStr),
-          Mode: "MKPL"
-        }
-      }
-    };
-
-    const res = await axios.post(
-      "https://ltv.slc-app-aka.prod.bo.canal.canalplustech.pro/api/V4/zones/cpfra/devices/31/apps/1/jobs/GetLicence",
-      body
-    );
-
-    if (res.data.ServiceResponse.Status !== "0") {
-      throw new Error("Failed to get license");
-    }
-
-    console.log("Successfully received license");
-    return res.data.ServiceResponse.OutData.LicenseInfo;
-  };
+  player.addEventListener("error", onErrorEvent);
 
   try {
-    player.loadVideo({
-      url: manifestURL,
-      transport: "dash",
-      autoPlay: false,
-      keySystems: [
-        {
-          type: "widevine",
-          getLicense,
-          getLicenseConfig: {
-            retry: 1,
-            timeout: 5
-          },
-          persistentLicenseConfig: {
-            save(data) {
-              localStorage.setItem(
-                "RxPlayer-persistent-storage",
-                JSON.stringify(data)
-              );
-            },
-            load() {
-              const item = localStorage.getItem("RxPlayer-persistent-storage");
-              return item === null ? [] : JSON.parse(item);
-            }
-          }
-        }
-      ],
-      referenceDateTime: 1370044800
-    });
+    await player.load(manifestUri);
 
     console.log("The video has now been loaded!");
-  } catch (e: unknown) {
-    console.error("An error occurred:", e);
+  } catch (e) {
+    onError(e);
   }
+}
+
+function onErrorEvent(event: any) {
+  onError(event.detail);
+}
+
+function onError(error: any) {
+  console.error("Error code", error.code, "object", error);
 }
 
 const Player = () => {
   const videoElement = useRef<HTMLVideoElement>(null);
-  const { epgId, WSXUrl } = useParams();
+  const { slug } = useParams<{ slug: string }>();
 
   useEffect(() => {
     const fetchManifest = async () => {
-      const config = (await window.mv.config.get()) as ConfigSchema;
-      if (!WSXUrl || !epgId || !config.RMUToken || !videoElement.current)
-        return;
+      if (!videoElement.current) return;
 
-      console.log("Fetching manifest list");
-      const manifestListURL = decodeURIComponent(WSXUrl as string);
-      const res = await fetch(
-        manifestListURL.replace("{RMUToken}", config.RMUToken!)
+      const LXP = (await (
+        await fetch(
+          `https://api.9now.com.au/web/live-experience?device=web&slug=${slug}&streamParams=web%2Cchrome%2Cmacos&region=act&offset=0&token=${(await window.mv.config.get()).token}`
+        )
+      ).json()) as LXPStream;
+
+      console.log(LXP);
+
+      const { data } = await axios.get<BrightcoveGetStream>(
+        `https://edge.api.brightcove.com/playback/v1/accounts/4460760524001/videos/ref%3A${LXP.data.getLXP.stream.video.referenceId ?? LXP.data.getLXP.stream.video.fallbackId}`,
+        {
+          headers: {
+            Accept:
+              "application/json;pk=BCpkADawqM17uNt4BA9TibECIvv8vBVypgHHIgThenKM55b88yzwUAmQ5hHbEfpsaQCimxMfcJglqzWqPTc21Mbnt4H-49t8_htP91BPml8bDw7AjWou9m_avlno4V7DBRsuLWdpLOoUMziK"
+          }
+        }
       );
-      const data = (await res.json()) as ManifestList;
-      const manifestURL = data.primary.src;
 
-      initPlayer(manifestURL, config, epgId, videoElement.current);
+      console.log(data, LXP);
+
+      const manifestUri =
+        data.sources[0].src +
+        "?" +
+        LXP.data.getLXP.stream.video.ssai.postfixParams;
+
+      console.log(manifestUri);
+
+      initPlayer(manifestUri, videoElement.current);
     };
 
     fetchManifest();
-
-    return () => {
-      // Clean up the player instance when the component unmounts
-      if (window.player) {
-        window.player.dispose();
-      }
-    };
-  }, [WSXUrl, epgId]);
-
-  useEffect(() => {
-    console.log(videoElement.current);
-  }, [videoElement]);
+  }, [slug, videoElement]);
 
   return (
     <div>

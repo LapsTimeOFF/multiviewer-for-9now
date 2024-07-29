@@ -2,19 +2,7 @@ import { ipcMain } from "electron";
 import Store, { Schema } from "electron-store";
 
 const schema: Schema<Record<string, unknown>> = {
-  passToken: {
-    type: "string"
-  },
-  RMUToken: {
-    type: "string"
-  },
-  LiveToken: {
-    type: "string"
-  },
-  userKeyId: {
-    type: "string"
-  },
-  deviceKeyId: {
+  token: {
     type: "string"
   }
 };

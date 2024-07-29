@@ -6,6 +6,7 @@ import "./styles/index.css";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import Player from "./pages/Player";
+import Channel from "./pages/Channel";
 
 const theme = createTheme({
   palette: {
@@ -19,8 +20,12 @@ const router = createHashRouter([
     element: <App />
   },
   {
-    path: "/player/:epgId/:WSXUrl",
+    path: "/player/:slug",
     element: <Player />
+  },
+  {
+    path: "/channel/:slug",
+    element: <Channel />
   }
 ]);
 
@@ -32,5 +37,3 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     </ThemeProvider>
   </React.StrictMode>
 );
-
-postMessage({ payload: "removeLoading" }, "*");

@@ -3,78 +3,50 @@ import {
   CardActionArea,
   CardContent,
   CardMedia,
-  Grid,
   Stack,
   Typography
 } from "@mui/material";
+import moment from "moment";
 import React, { FC } from "react";
 import { Link } from "react-router-dom";
-import { Channel as ChannelType } from "shared/catalogTypes";
-import { Channel as TVChannelType } from "shared/types";
+import { SwitcherRail } from "shared/getLiveExperienceTypes";
 
 interface Props {
-  channel: ChannelType;
-  TVChannel: TVChannelType;
+  channel: SwitcherRail;
 }
 
-const Channel: FC<Props> = ({ channel, TVChannel }) => {
-  // Get the current program based on the content with the first startTime
-  const sortedPrograms = channel.contents.sort(
-    (a, b) => a.startTime - b.startTime
+const Channel: FC<Props> = ({ channel }) => {
+  const currentAiring = channel.airings?.find(
+    (a) =>
+      new Date(a.startDate) < new Date() && new Date(a.endDate) > new Date()
   );
-  const currentProgram = sortedPrograms[0];
 
   return (
-    <Grid item>
-      <Card
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          maxWidth: "320px",
-          minHeight: "280px"
-        }}
-      >
-        <CardActionArea
-          component={Link}
-          to={`/player/${channel.epgID}/${encodeURIComponent(TVChannel.WSXUrl)}`}
-        >
-          <Stack direction="column" gap={0}>
-            <CardMedia
-              component="img"
-              alt={channel.Name}
-              sx={{
-                objectFit: "contain",
-                width: "320px",
-                height: "180px",
-                zIndex: 1
-              }}
-              image={channel.URLLogoChannel}
-            />
-            <CardMedia
-              component="img"
-              alt={channel.Name}
-              sx={{
-                objectFit: "contain",
-                width: "320px",
-                height: "180px",
-                position: "absolute"
-              }}
-              image={currentProgram.URLImage}
-            />
-            <CardContent>
-              <Typography variant="h5">
-                <b>{channel.Name}</b>
-              </Typography>
-              <Typography variant="body1">{currentProgram.title}</Typography>
-              <Typography variant="subtitle2" color={"#c4c4c4"}>
-                {currentProgram.subtitle}
-              </Typography>
-            </CardContent>
-          </Stack>
-        </CardActionArea>
-      </Card>
-    </Grid>
+    <Card>
+      <CardActionArea component={Link} to={`/channel/${channel.slug}`}>
+        <Stack direction="row" spacing={2}>
+          <CardMedia
+            component="img"
+            sx={{
+              width: 125,
+              height: 125
+            }}
+            image={channel.switcherLogo.sizes.w768}
+            alt={channel.switcherLogo.alt}
+          />
+          <CardContent>
+            <Typography variant="h4">{channel.name}</Typography>
+            <Typography variant="body1">
+              {currentAiring?.title || "No current airing"}
+            </Typography>
+            <Typography variant="subtitle2" color="#c4c4c4">
+              {moment(currentAiring?.startDate).format("h:mm a")} -{" "}
+              {moment(currentAiring?.endDate).format("h:mm a")}
+            </Typography>
+          </CardContent>
+        </Stack>
+      </CardActionArea>
+    </Card>
   );
 };
 
