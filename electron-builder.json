@@ -24,5 +24,8 @@
     "allowToChangeInstallationDirectory": true,
     "deleteAppDataOnUninstall": false
   },
-  "publish": "always"
+  "publish": {
+    "provider": "github",
+    "releaseType": "draft"
+  }
 }
