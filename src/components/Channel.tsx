@@ -8,7 +8,6 @@ import {
 } from "@mui/material";
 import moment from "moment";
 import React, { FC } from "react";
-import { Link } from "react-router-dom";
 import { SwitcherRail } from "shared/getLiveExperienceTypes";
 
 interface Props {
@@ -23,7 +22,11 @@ const Channel: FC<Props> = ({ channel }) => {
 
   return (
     <Card>
-      <CardActionArea component={Link} to={`/channel/${channel.slug}`}>
+      <CardActionArea
+        onClick={() => {
+          window.mv.player.create(`/channel/${channel.slug}`);
+        }}
+      >
         <Stack direction="row" spacing={2}>
           <CardMedia
             component="img"

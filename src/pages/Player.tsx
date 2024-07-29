@@ -103,7 +103,16 @@ const Player = () => {
   return (
     <div>
       <div id="video-container" ref={uiContainer}>
-        <video data-shaka-player ref={videoElement} autoPlay muted />
+        <video
+          data-shaka-player
+          ref={videoElement}
+          autoPlay
+          muted
+          style={{
+            width: "100%",
+            height: "100%"
+          }}
+        />
       </div>
     </div>
   );

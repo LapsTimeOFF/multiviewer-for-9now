@@ -16,8 +16,6 @@ import { SwitcherRail } from "shared/getLiveExperienceTypes";
 import { Item, LiveExperienceGroup } from "shared/LXPGroupTypes";
 import { ConfigSchema } from "shared/configType";
 import moment from "moment";
-import { Link } from "react-router-dom";
-import { JSONTree } from "react-json-tree";
 
 interface Props {
   switcherRail: SwitcherRail;
@@ -110,7 +108,6 @@ const LiveEventGroup: FC<Props> = ({ switcherRail, config }) => {
 
           {!LXP && <CircularProgress />}
           <Collapse in={expanded}>
-            <JSONTree data={LXP} />
             {LXP?.data.getLXP.promoRail.items.map((item) => (
               <Stream stream={item} key={item.id} />
             ))}
@@ -142,7 +139,11 @@ const Stream: FC<StreamProps> = ({ stream }) => {
         width: 975
       }}
     >
-      <CardActionArea component={Link} to={`/player/${stream.slug}`}>
+      <CardActionArea
+        onClick={() => {
+          window.mv.player.create(`/player/${stream.slug}`);
+        }}
+      >
         <Stack direction="row" spacing={2}>
           <CardMedia
             component="img"

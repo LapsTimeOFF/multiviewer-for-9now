@@ -11,7 +11,6 @@ import {
 import "../styles/App.css";
 import { ConfigSchema } from "shared/configType";
 import { GetLiveExperience } from "../../shared/getLiveExperienceTypes";
-import { JSONTree } from "react-json-tree";
 import Channel from "@/components/Channel";
 import LiveEventGroup from "@/components/LiveEventGroup";
 
@@ -60,6 +59,11 @@ function App() {
   if (!config.token)
     return (
       <Container>
+        <Typography>
+          To obtain your token go to https://www.9now.com.au/, open dev tools,
+          go to the localStorage and found the key &quot;_nine_token&quot;, copy
+          the key &quot;token&quot; in it and paste it below.
+        </Typography>
         <TextField
           label="token"
           variant="outlined"
@@ -120,8 +124,6 @@ function App() {
           mt: 2
         }}
       >
-        <JSONTree data={{ config, liveExperience }} />
-
         {liveExperience?.data.getLXP.switcherRail
           .filter((r) => r.type === "channel")
           .sort((a, b) => {

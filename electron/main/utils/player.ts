@@ -1,6 +1,9 @@
 import { BrowserWindow, ipcMain } from "electron";
-import { join } from "path";
+import { join, dirname } from "path";
 import { RENDERER_DIST, VITE_DEV_SERVER_URL } from "..";
+import { fileURLToPath } from "node:url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const createPlayer = (path: string) => {
   let win: BrowserWindow | null = null;
@@ -20,7 +23,7 @@ const createPlayer = (path: string) => {
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       // contextIsolation: false,
     },
-    frame: false,
+    frame: true,
     height: 1080,
     width: 1920
   });
