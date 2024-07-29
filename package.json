@@ -14,7 +14,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && electron-builder --publish always",
+    "build": "tsc && vite build && electron-builder",
     "preview": "vite preview",
     "lint": "eslint src/ electron/ shared/ --fix"
   },
