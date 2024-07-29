@@ -9,9 +9,13 @@ import {
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import os from "node:os";
+import http from "node:http";
+import handler from "serve-handler";
+
 import nineNow from "./utils/9now";
 import config from "./utils/config";
 import player from "./utils/player";
+import getPort from "get-port";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -96,7 +100,19 @@ async function createWindow() {
     // Open devTool if the app is not packaged
     win.webContents.openDevTools();
   } else {
-    win.loadFile(indexHtml);
+    const server = http.createServer((req, res) => {
+      return handler(req, res, {
+        public: RENDERER_DIST
+      });
+    });
+
+    const port = await getPort();
+
+    server.listen(port, () => {
+      console.log(`Server running at http://localhost:${port}`);
+    });
+
+    win.loadURL(`http://localhost:${port}`);
   }
 
   // Test actively push message to the Electron-Renderer

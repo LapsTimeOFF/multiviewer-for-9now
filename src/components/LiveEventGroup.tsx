@@ -141,7 +141,7 @@ const Stream: FC<StreamProps> = ({ stream }) => {
     >
       <CardActionArea
         onClick={() => {
-          window.mv.player.create(`/player/${stream.slug}`);
+          window.mv.player.create(`/player/${stream.slug}`, location.port);
         }}
       >
         <Stack direction="row" spacing={2}>

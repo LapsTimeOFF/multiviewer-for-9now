@@ -25,6 +25,7 @@
     "deleteAppDataOnUninstall": false
   },
   "publish": {
-    "provider": "github"
+    "provider": "github",
+    "releaseType": "draft"
   }
 }

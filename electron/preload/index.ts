@@ -30,7 +30,8 @@ export const api = {
       ipcRenderer.invoke("9now:getLiveExperience", token)
   },
   player: {
-    create: (path: string) => ipcRenderer.invoke("player:create", path)
+    create: (path: string, port: string) =>
+      ipcRenderer.invoke("player:create", path, port)
   },
   config: {
     set: (key: keyof ConfigSchema, value: unknown) => {

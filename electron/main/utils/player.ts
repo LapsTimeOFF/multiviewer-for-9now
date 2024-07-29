@@ -1,14 +1,13 @@
 import { BrowserWindow, ipcMain } from "electron";
 import { join, dirname } from "path";
-import { RENDERER_DIST, VITE_DEV_SERVER_URL } from "..";
+import { VITE_DEV_SERVER_URL } from "..";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const createPlayer = (path: string) => {
+const createPlayer = (path: string, port: string) => {
   let win: BrowserWindow | null = null;
   const preload = join(__dirname, "../preload/index.mjs");
-  const indexHtml = join(RENDERER_DIST, "index.html");
 
   win = new BrowserWindow({
     title: "Main window",
@@ -36,15 +35,12 @@ const createPlayer = (path: string) => {
     // #298
     win.loadURL(VITE_DEV_SERVER_URL + `#${path}`);
   } else {
-    win.loadFile(indexHtml);
-    win.on("ready-to-show", () => {
-      win.webContents.executeJavaScript(`location.hash='#${path}'`);
-    });
+    win.loadURL(`http://localhost:${port}/#${path}`);
   }
 };
 
 export default function () {
-  ipcMain.handle("player:create", async (event, path: string) => {
-    return createPlayer(path);
+  ipcMain.handle("player:create", async (event, path: string, port: string) => {
+    return createPlayer(path, port);
   });
 }
