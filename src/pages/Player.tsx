@@ -3,7 +3,7 @@ import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import "shaka-player/dist/controls.css";
-import shaka from "shaka-player/dist/shaka-player.ui.debug";
+import shaka from "shaka-player/dist/shaka-player.ui";
 import { BrightcoveGetStream } from "shared/BrightcoveGetStream";
 import { LXPStream } from "shared/LXPStream";
 
