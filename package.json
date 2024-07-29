@@ -1,6 +1,6 @@
 {
   "name": "multiviewer-for-9now",
-  "version": "1.0.0-beta1",
+  "version": "1.0.0",
   "main": "dist-electron/main/index.js",
   "description": "Watch many channels at the same time from 9NOW",
   "author": "Quentin Baguette",
@@ -16,7 +16,7 @@
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
     "preview": "vite preview",
-    "lint": "eslint src/ electron/ e2e/ --fix",
+    "lint": "eslint src/ electron/ shared/ --fix",
     "sign:widevine": "python3 -m castlabs_evs.vmp sign-pkg node_modules/electron/dist"
   },
   "dependencies": {
