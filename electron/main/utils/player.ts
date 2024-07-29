@@ -36,7 +36,10 @@ const createPlayer = (path: string) => {
     // #298
     win.loadURL(VITE_DEV_SERVER_URL + `#${path}`);
   } else {
-    win.loadFile(indexHtml + `#${path}`);
+    win.loadFile(indexHtml);
+    win.on("ready-to-show", () => {
+      win.webContents.executeJavaScript(`location.hash='#${path}'`);
+    });
   }
 };
 
