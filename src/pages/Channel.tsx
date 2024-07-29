@@ -92,7 +92,7 @@ const Channel = () => {
   return (
     <div>
       <div id="video-container" ref={uiContainer}>
-        <video data-shaka-player ref={videoElement} autoPlay />
+        <video data-shaka-player ref={videoElement} autoPlay muted />
       </div>
     </div>
   );

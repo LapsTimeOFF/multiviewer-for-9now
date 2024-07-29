@@ -20,7 +20,9 @@ const createPlayer = (path: string) => {
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       // contextIsolation: false,
     },
-    frame: false
+    frame: false,
+    height: 1080,
+    width: 1920
   });
 
   win.setAspectRatio(16 / 9);

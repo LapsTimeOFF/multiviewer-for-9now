@@ -11,6 +11,7 @@ import path from "node:path";
 import os from "node:os";
 import nineNow from "./utils/9now";
 import config from "./utils/config";
+import player from "./utils/player";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -65,7 +66,7 @@ let win: BrowserWindow | null = null;
 const preload = path.join(__dirname, "../preload/index.mjs");
 const indexHtml = path.join(RENDERER_DIST, "index.html");
 
-const ipc = [nineNow, config];
+const ipc = [nineNow, config, player];
 
 for (const api of ipc) {
   api();

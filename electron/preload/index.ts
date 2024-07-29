@@ -29,6 +29,9 @@ export const api = {
     getLiveExperience: (token: string): Promise<GetLiveExperience> =>
       ipcRenderer.invoke("9now:getLiveExperience", token)
   },
+  player: {
+    create: (path: string) => ipcRenderer.invoke("player:create", path)
+  },
   config: {
     set: (key: keyof ConfigSchema, value: unknown) => {
       ipcRenderer.invoke("config:set", key, value);
