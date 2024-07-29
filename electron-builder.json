@@ -1,5 +1,5 @@
 {
-  "appId": "fr.lapstime.mv-mycanal",
+  "appId": "fr.lapstime.mv-9now",
   "asar": true,
   "directories": {
     "output": "release/${version}"
