@@ -1,8 +1,10 @@
 import {
+  Box,
   Card,
   CardActionArea,
   CardContent,
   CardMedia,
+  Checkbox,
   CircularProgress,
   Collapse,
   Stack,
@@ -17,6 +19,8 @@ import useSWR from "swr";
 
 interface Props {
   switcherRail: SwitcherRail;
+  gridList: string[];
+  setGridList: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const fetchLXP = async (slug: string) => {
@@ -35,7 +39,7 @@ const fetchLXP = async (slug: string) => {
   return data;
 };
 
-const LiveEventGroup: FC<Props> = ({ switcherRail }) => {
+const LiveEventGroup: FC<Props> = ({ switcherRail, gridList, setGridList }) => {
   const { data: LXP, isLoading } = useSWR<LiveExperienceGroup>(
     switcherRail.slug,
     fetchLXP
@@ -114,9 +118,22 @@ const LiveEventGroup: FC<Props> = ({ switcherRail }) => {
       ) : (
         <Collapse in={expanded}>
           <CardContent>
-            {LXP?.data.getLXP.promoRail.items.map((item) => (
-              <Stream stream={item} key={item.id} />
-            ))}
+            {LXP?.data.getLXP.promoRail.items
+              .sort((a, b) => {
+                if (!a.startDate || !b.startDate) return 0;
+                return (
+                  new Date(a.startDate ?? 0).getTime() -
+                  new Date(b.startDate ?? 0).getTime()
+                );
+              })
+              .map((item) => (
+                <Stream
+                  stream={item}
+                  key={item.id}
+                  gridList={gridList}
+                  setGridList={setGridList}
+                />
+              ))}
           </CardContent>
         </Collapse>
       )}
@@ -126,9 +143,11 @@ const LiveEventGroup: FC<Props> = ({ switcherRail }) => {
 
 type StreamProps = {
   stream: Item;
+  gridList: string[];
+  setGridList: React.Dispatch<React.SetStateAction<string[]>>;
 };
 
-const Stream: FC<StreamProps> = ({ stream }) => {
+const Stream: FC<StreamProps> = ({ stream, gridList, setGridList }) => {
   const isLive = () => {
     const startDate = new Date(stream.startDate);
     const endDate = new Date(stream.endDate);
@@ -145,58 +164,75 @@ const Stream: FC<StreamProps> = ({ stream }) => {
         width: "100%"
       }}
     >
-      <CardActionArea
-        onClick={() => {
-          window.mv.player.create(`/player/${stream.slug}`, location.port);
-        }}
-      >
-        <Stack direction="row" spacing={2}>
-          <CardMedia
-            component="img"
-            sx={{
-              width: 800 / 3,
-              height: 150
+      <Stack direction="row" spacing={2}>
+        <Box
+          sx={{
+            w: 24,
+            h: 24,
+            pl: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Checkbox
+            checked={gridList.includes(stream.slug)}
+            onChange={(e) => {
+              if (e.target.checked) {
+                setGridList((prev) => [...prev, stream.slug]);
+              } else {
+                setGridList((prev) =>
+                  prev.filter((slug) => slug !== stream.slug)
+                );
+              }
             }}
-            image={stream.image.sizes.w320}
-            alt={stream.image.alt}
           />
-          <CardContent>
-            <Typography
-              variant="h5"
+        </Box>
+        <CardMedia
+          component="img"
+          sx={{
+            width: 800 / 3,
+            height: 150
+          }}
+          image={stream.image.sizes.w320}
+          alt={stream.image.alt}
+        />
+        <CardContent>
+          <Typography
+            variant="h5"
+            sx={{
+              opacity: isLive() ? 1 : 0.5
+            }}
+          >
+            {stream.name}{" "}
+            <FiberManualRecordIcon
+              color="error"
               sx={{
-                opacity: isLive() ? 1 : 0.5
+                display: isLive() ? "inline" : "none",
+                pt: 0.5,
+                animation: "flashLive 1.5s infinite"
               }}
-            >
-              {stream.name}{" "}
-              <FiberManualRecordIcon
-                color="error"
-                sx={{
-                  display: isLive() ? "inline" : "none",
-                  pt: 0.5,
-                  animation: "flashLive 1.5s infinite"
-                }}
-              />
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                opacity: isLive() ? 1 : 0.5
-              }}
-            >
-              {stream.description}
-            </Typography>
-            <Typography
-              variant="subtitle2"
-              sx={{
-                opacity: isLive() ? 1 : 0.5
-              }}
-            >
-              {moment(stream.startDate).format("h:mm a")} -{" "}
-              {moment(stream.endDate).format("h:mm a")}
-            </Typography>
-          </CardContent>
-        </Stack>
-      </CardActionArea>
+            />
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              opacity: isLive() ? 1 : 0.5
+            }}
+          >
+            {stream.description}
+          </Typography>
+          <Typography
+            variant="subtitle2"
+            sx={{
+              opacity: isLive() ? 1 : 0.5
+            }}
+          >
+            {moment(stream.startDate).format("h:mm a")} -{" "}
+            {moment(stream.endDate).format("h:mm a")}
+          </Typography>
+        </CardContent>
+      </Stack>
     </Card>
   );
 };

@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any  */
 import { Box, CircularProgress } from "@mui/material";
 import axios from "axios";
-import React, { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { FC, useEffect, useRef, useState } from "react";
 import "shaka-player/dist/controls.css";
 import "../styles/Player.css";
 import shaka from "shaka-player/dist/shaka-player.ui";
@@ -57,12 +56,15 @@ function onError(error: any) {
   console.error("Error code", error.code, "object", error);
 }
 
-const Player = () => {
+type Props = {
+  slug: string;
+};
+
+const Player: FC<Props> = ({ slug }) => {
   const videoElement = useRef<HTMLVideoElement>(null);
   const uiContainer = useRef<HTMLDivElement>(null);
   const [manifestUri, setManifestUri] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const { slug } = useParams<{ slug: string }>();
 
   const fetchManifest = async () => {
     const token = (await window.mv.config.get()).token;
@@ -71,26 +73,26 @@ const Player = () => {
     );
     const LXP = (await response.json()) as LXPStream;
 
-    console.log(LXP);
-
-    const { data } = await axios.get<BrightcoveGetStream>(
-      `https://edge.api.brightcove.com/playback/v1/accounts/4460760524001/videos/ref%3A${LXP.data.getLXP.stream.video.referenceId ?? LXP.data.getLXP.stream.video.fallbackId}`,
-      {
-        headers: {
-          Accept:
-            "application/json;pk=BCpkADawqM17uNt4BA9TibECIvv8vBVypgHHIgThenKM55b88yzwUAmQ5hHbEfpsaQCimxMfcJglqzWqPTc21Mbnt4H-49t8_htP91BPml8bDw7AjWou9m_avlno4V7DBRsuLWdpLOoUMziK"
+    if (LXP.data.getLXP.stream.video.url) {
+      return LXP.data.getLXP.stream.video.url;
+    } else {
+      const { data } = await axios.get<BrightcoveGetStream>(
+        `https://edge.api.brightcove.com/playback/v1/accounts/4460760524001/videos/ref%3A${LXP.data.getLXP.stream.video.referenceId ?? LXP.data.getLXP.stream.video.fallbackId}`,
+        {
+          headers: {
+            Accept:
+              "application/json;pk=BCpkADawqM17uNt4BA9TibECIvv8vBVypgHHIgThenKM55b88yzwUAmQ5hHbEfpsaQCimxMfcJglqzWqPTc21Mbnt4H-49t8_htP91BPml8bDw7AjWou9m_avlno4V7DBRsuLWdpLOoUMziK"
+          }
         }
-      }
-    );
+      );
 
-    console.log(data, LXP);
+      const manifestUri =
+        data.sources[0].src +
+        "?" +
+        LXP.data.getLXP.stream.video.ssai.postfixParams;
 
-    const manifestUri =
-      data.sources[0].src +
-      "?" +
-      LXP.data.getLXP.stream.video.ssai.postfixParams;
-
-    return manifestUri;
+      return manifestUri;
+    }
   };
 
   useEffect(() => {
@@ -111,15 +113,20 @@ const Player = () => {
   }, []);
 
   return (
-    <>
+    <div
+      style={{
+        height: "100%",
+        width: "100%"
+      }}
+    >
       {!loaded && (
         <Box
           sx={{
-            position: "absolute",
+            // position: "absolute",
             top: 0,
             left: 0,
-            width: "100vw",
-            height: "100vh",
+            width: "100%",
+            height: "100%",
             backgroundColor: "#1c1c1c",
             zIndex: 100,
             display: "flex",
@@ -130,17 +137,19 @@ const Player = () => {
           <CircularProgress />
         </Box>
       )}
-      <div>
-        <div
-          className="draggable"
-          style={{
-            zIndex: 1
-          }}
-        />
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          position: "relative"
+        }}
+      >
         <div
           id="video-container"
           style={{
-            zIndex: 2
+            zIndex: 2,
+            height: "100%",
+            width: "100%"
           }}
           ref={uiContainer}
         >
@@ -150,14 +159,15 @@ const Player = () => {
             autoPlay
             muted
             style={{
-              width: "100%",
+              zIndex: 1,
               height: "100%",
-              zIndex: 1
+              width: "100%",
+              objectFit: "contain"
             }}
           />
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

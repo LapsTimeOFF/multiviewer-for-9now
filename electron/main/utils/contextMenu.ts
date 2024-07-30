@@ -13,10 +13,7 @@ const contextTemplate: Array<
     label: "Close all players",
     click: () => {
       BrowserWindow.getAllWindows().forEach((win) => {
-        if (
-          win.webContents.getURL().includes("/player/") ||
-          win.webContents.getURL().includes("/channel/")
-        ) {
+        if (win.webContents.getURL().includes("/grid")) {
           win.close();
         }
       });
@@ -27,8 +24,7 @@ const contextTemplate: Array<
     click: (_, win) => {
       BrowserWindow.getAllWindows().forEach((window) => {
         if (
-          (window.webContents.getURL().includes("/player/") ||
-            window.webContents.getURL().includes("/channel/")) &&
+          window.webContents.getURL().includes("/grid") &&
           window.id !== win?.id
         ) {
           window.close();
