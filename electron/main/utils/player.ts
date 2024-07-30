@@ -22,10 +22,11 @@ const createPlayer = (path: string, port: string) => {
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       // contextIsolation: false,
     },
-    frame: true,
+    frame: false,
     height: 1080,
     width: 1920,
-    autoHideMenuBar: true
+    autoHideMenuBar: true,
+    titleBarStyle: "customButtonsOnHover"
   });
 
   win.setAspectRatio(16 / 9);

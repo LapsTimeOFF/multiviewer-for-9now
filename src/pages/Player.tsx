@@ -131,7 +131,19 @@ const Player = () => {
         </Box>
       )}
       <div>
-        <div id="video-container" ref={uiContainer}>
+        <div
+          className="draggable"
+          style={{
+            zIndex: 1
+          }}
+        />
+        <div
+          id="video-container"
+          style={{
+            zIndex: 2
+          }}
+          ref={uiContainer}
+        >
           <video
             data-shaka-player
             ref={videoElement}
