@@ -114,9 +114,15 @@ const LiveEventGroup: FC<Props> = ({ switcherRail }) => {
       ) : (
         <Collapse in={expanded}>
           <CardContent>
-            {LXP?.data.getLXP.promoRail.items.map((item) => (
-              <Stream stream={item} key={item.id} />
-            ))}
+            {LXP?.data.getLXP.promoRail.items
+              .sort((a, b) => {
+                if (!a.startDate || !b.startDate) return 0;
+                return (
+                  new Date(a.startDate ?? 0).getTime() -
+                  new Date(b.startDate ?? 0).getTime()
+                );
+              })
+              .map((item) => <Stream stream={item} key={item.id} />)}
           </CardContent>
         </Collapse>
       )}
@@ -147,7 +153,8 @@ const Stream: FC<StreamProps> = ({ stream }) => {
     >
       <CardActionArea
         onClick={() => {
-          window.mv.player.create(`/player/${stream.slug}`, location.port);
+          // window.mv.player.create(`/player/${stream.slug}`, location.port);
+          window.navigator.clipboard.writeText(stream.slug);
         }}
       >
         <Stack direction="row" spacing={2}>

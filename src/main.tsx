@@ -5,8 +5,7 @@ import App from "./pages/App";
 import "./styles/index.css";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import { createHashRouter, RouterProvider } from "react-router-dom";
-import Player from "./pages/Player";
-import Channel from "./pages/Channel";
+import GridPlayer from "./pages/GridPlayer";
 
 const theme = createTheme({
   palette: {
@@ -20,12 +19,8 @@ const router = createHashRouter([
     element: <App />
   },
   {
-    path: "/player/:slug",
-    element: <Player />
-  },
-  {
-    path: "/channel/:slug",
-    element: <Channel />
+    path: "/grid",
+    element: <GridPlayer />
   }
 ]);
 

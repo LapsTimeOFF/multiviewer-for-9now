@@ -24,7 +24,8 @@ const Channel: FC<Props> = ({ channel }) => {
     <Card>
       <CardActionArea
         onClick={() => {
-          window.mv.player.create(`/channel/${channel.slug}`, location.port);
+          // window.mv.player.create(`/channel/${channel.slug}`, location.port);
+          window.navigator.clipboard.writeText(channel.slug);
         }}
       >
         <Stack direction="row" spacing={2}>
