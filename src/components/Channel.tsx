@@ -15,13 +15,28 @@ interface Props {
   channel: SwitcherRail;
   gridList: string[];
   setGridList: React.Dispatch<React.SetStateAction<string[]>>;
+  olympicsFilter: boolean;
 }
 
-const Channel: FC<Props> = ({ channel, gridList, setGridList }) => {
+const Channel: FC<Props> = ({
+  channel,
+  gridList,
+  setGridList,
+  olympicsFilter
+}) => {
   const currentAiring = channel.airings?.find(
     (a) =>
       new Date(a.startDate) < new Date() && new Date(a.endDate) > new Date()
   );
+
+  if (
+    !(
+      currentAiring?.title.includes("Olympic") ||
+      currentAiring?.title.includes("Paris")
+    ) &&
+    olympicsFilter
+  )
+    return;
 
   return (
     <Card>

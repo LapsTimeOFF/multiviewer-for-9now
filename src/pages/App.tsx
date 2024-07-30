@@ -8,13 +8,17 @@ import {
   Snackbar,
   TextField,
   Typography,
-  Link
+  Link,
+  Stack,
+  Checkbox,
+  FormControlLabel
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import "../styles/App.css";
 import { ConfigSchema } from "shared/configType";
 import { GetLiveExperience } from "../../shared/getLiveExperienceTypes";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import Channel from "@/components/Channel";
 import LiveEventGroup from "@/components/LiveEventGroup";
 import useSWR from "swr";
@@ -43,6 +47,8 @@ const fetchLiveExperience = async () => {
 function App() {
   const [token, setToken] = useState("");
   const [open, setOpen] = useState(false);
+  const [liveFilter, setLiveFilter] = useState(false);
+  const [olypicsFilter, setOlypicsFilter] = useState(false);
   const [gridList, setGridList] = useState<string[]>([]);
 
   const [config, setConfig] = useState<ConfigSchema>({});
@@ -179,6 +185,32 @@ function App() {
             mt: 2
           }}
         >
+          <Stack direction="row" spacing={2}>
+            <FilterAltIcon />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  value={liveFilter}
+                  onChange={(e) => {
+                    setLiveFilter(e.target.checked);
+                  }}
+                />
+              }
+              label="Show live only"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  value={olypicsFilter}
+                  onChange={(e) => {
+                    setOlypicsFilter(e.target.checked);
+                  }}
+                />
+              }
+              label="Show Olympics only"
+            />
+          </Stack>
+
           <Box
             sx={{
               width: "100%"
@@ -219,6 +251,7 @@ function App() {
                 key={r.id}
                 gridList={gridList}
                 setGridList={setGridList}
+                olympicsFilter={olypicsFilter}
               />
             ))}
 
@@ -239,6 +272,8 @@ function App() {
                 key={r.id}
                 gridList={gridList}
                 setGridList={setGridList}
+                liveFilter={liveFilter}
+                olympicsFilter={olypicsFilter}
               />
             ))}
 
