@@ -21,7 +21,21 @@ interface Props {
   switcherRail: SwitcherRail;
   gridList: string[];
   setGridList: React.Dispatch<React.SetStateAction<string[]>>;
+  liveFilter: boolean;
+  olympicsFilter: boolean;
 }
+
+const nonOlympicsSlug = [
+  "100-footy",
+  "60-minutes-australia",
+  "9crime",
+  "dance-moms-247",
+  "footy-furnace",
+  "married-at-first-sight",
+  "pedestrian-television",
+  "qrl-hostplus-cup-2024",
+  "seinfeld"
+];
 
 const fetchLXP = async (slug: string) => {
   const { token } = await window.mv.config.get();
@@ -39,7 +53,13 @@ const fetchLXP = async (slug: string) => {
   return data;
 };
 
-const LiveEventGroup: FC<Props> = ({ switcherRail, gridList, setGridList }) => {
+const LiveEventGroup: FC<Props> = ({
+  switcherRail,
+  gridList,
+  setGridList,
+  liveFilter,
+  olympicsFilter
+}) => {
   const { data: LXP, isLoading } = useSWR<LiveExperienceGroup>(
     switcherRail.slug,
     fetchLXP
@@ -82,6 +102,10 @@ const LiveEventGroup: FC<Props> = ({ switcherRail, gridList, setGridList }) => {
     }
   }, [LXP]);
 
+  if (olympicsFilter && nonOlympicsSlug.includes(switcherRail.slug))
+    return null;
+  if (liveFilter && currentlyLive === 0) return null;
+
   return (
     <Card>
       <CardActionArea
@@ -119,6 +143,16 @@ const LiveEventGroup: FC<Props> = ({ switcherRail, gridList, setGridList }) => {
         <Collapse in={expanded}>
           <CardContent>
             {LXP?.data.getLXP.promoRail.items
+              .filter((item) => {
+                if (liveFilter) {
+                  return (
+                    new Date(item.startDate) < new Date() &&
+                    new Date(item.endDate) > new Date()
+                  );
+                }
+
+                return true;
+              })
               .sort((a, b) => {
                 if (!a.startDate || !b.startDate) return 0;
                 return (
