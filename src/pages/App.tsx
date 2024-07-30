@@ -13,48 +13,46 @@ import { ConfigSchema } from "shared/configType";
 import { GetLiveExperience } from "../../shared/getLiveExperienceTypes";
 import Channel from "@/components/Channel";
 import LiveEventGroup from "@/components/LiveEventGroup";
+import useSWR from "swr";
+
+const fetchLiveExperience = async () => {
+  const config = await window.mv.config.get();
+
+  if (!config.token) return;
+
+  const data = (await (
+    await fetch(
+      `https://api.9now.com.au/web/live-experience?device=web&slug=gem&streamParams=web%2Cchrome%2Cmacos&region=nsw&offset=0&token=${config.token}`
+    )
+  ).json()) as GetLiveExperience;
+
+  console.log(data);
+
+  if (!data.data) {
+    window.mv.config.set("token", "");
+    window.location.reload();
+  }
+
+  return data;
+};
 
 function App() {
   const [token, setToken] = useState("");
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   const [config, setConfig] = useState<ConfigSchema>({});
-  const [liveExperience, setLiveExperience] = useState<GetLiveExperience>();
+  const { data: liveExperience, isLoading } = useSWR<
+    GetLiveExperience | undefined
+  >("liveExperience", fetchLiveExperience);
 
   useEffect(() => {
     const fetchConfig = async () => {
       const res = await window.mv.config.get();
       setConfig(res);
-
-      setLoading(false);
     };
 
     fetchConfig();
   }, []);
-
-  useEffect(() => {
-    const fetchLiveExperience = async () => {
-      if (!config.token) return;
-
-      const data = (await (
-        await fetch(
-          `https://api.9now.com.au/web/live-experience?device=web&slug=gem&streamParams=web%2Cchrome%2Cmacos&region=nsw&offset=0&token=${config.token}`
-        )
-      ).json()) as GetLiveExperience;
-
-      console.log(data);
-
-      if (!data.data) {
-        window.mv.config.set("token", "");
-        window.location.reload();
-      }
-
-      setLiveExperience(data);
-    };
-
-    fetchLiveExperience();
-  }, [config.token]);
 
   if (!config.token)
     return (
@@ -100,7 +98,7 @@ function App() {
       </Container>
     );
 
-  if (loading || !liveExperience) {
+  if (isLoading || !liveExperience || !config) {
     return (
       <Container>
         <Typography variant="h2">
@@ -148,9 +146,7 @@ function App() {
             }
             return 0;
           })
-          .map((r) => (
-            <LiveEventGroup switcherRail={r} key={r.id} config={config} />
-          ))}
+          .map((r) => <LiveEventGroup switcherRail={r} key={r.id} />)}
       </Box>
     </Container>
   );
