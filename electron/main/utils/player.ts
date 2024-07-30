@@ -24,7 +24,8 @@ const createPlayer = (path: string, port: string) => {
     },
     frame: true,
     height: 1080,
-    width: 1920
+    width: 1920,
+    autoHideMenuBar: true
   });
 
   win.setAspectRatio(16 / 9);
