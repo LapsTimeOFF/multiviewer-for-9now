@@ -47,30 +47,34 @@ const LiveEventGroup: FC<Props> = ({ switcherRail }) => {
   useEffect(() => {
     if (!LXP || isLoading) return;
 
-    const items = LXP.data.getLXP.promoRail.items;
+    try {
+      const items = LXP.data.getLXP.promoRail.items;
 
-    const live = items.filter((item) => {
-      const startDate = new Date(item.startDate);
-      const endDate = new Date(item.endDate);
-      const now = new Date();
+      const live = items.filter((item) => {
+        const startDate = new Date(item.startDate);
+        const endDate = new Date(item.endDate);
+        const now = new Date();
 
-      return startDate < now && endDate > now;
-    });
+        return startDate < now && endDate > now;
+      });
 
-    setCurrentlyLive(live.length);
+      setCurrentlyLive(live.length);
 
-    if (live.length === 0) {
-      const next = items
-        .filter((item) => new Date(item.startDate) > new Date())
-        .sort((a, b) => {
-          if (!a.startDate || !b.startDate) return 0;
-          return (
-            new Date(a.startDate ?? 0).getTime() -
-            new Date(b.startDate ?? 0).getTime()
-          );
-        })[0];
+      if (live.length === 0) {
+        const next = items
+          .filter((item) => new Date(item.startDate) > new Date())
+          .sort((a, b) => {
+            if (!a.startDate || !b.startDate) return 0;
+            return (
+              new Date(a.startDate ?? 0).getTime() -
+              new Date(b.startDate ?? 0).getTime()
+            );
+          })[0];
 
-      setNextLiveTime(next.startDate);
+        setNextLiveTime(next.startDate);
+      }
+    } catch (error) {
+      console.error("Failed to parse live data", error);
     }
   }, [LXP]);
 
