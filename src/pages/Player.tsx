@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any  */
+import { Box, CircularProgress } from "@mui/material";
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import "shaka-player/dist/controls.css";
+import "../styles/Player.css";
 import shaka from "shaka-player/dist/shaka-player.ui";
 import { BrightcoveGetStream } from "shared/BrightcoveGetStream";
 import { LXPStream } from "shared/LXPStream";
@@ -10,7 +12,8 @@ import { LXPStream } from "shared/LXPStream";
 async function initPlayer(
   manifestUri: string,
   video: HTMLVideoElement,
-  uiContainer: HTMLDivElement
+  uiContainer: HTMLDivElement,
+  setLoaded: (loaded: boolean) => void
 ) {
   shaka.polyfill.installAll();
 
@@ -40,6 +43,7 @@ async function initPlayer(
 
     await player.load(manifestUri);
     console.log("The video has now been loaded!");
+    setLoaded(true);
   } catch (e) {
     onError(e);
   }
@@ -57,6 +61,7 @@ const Player = () => {
   const videoElement = useRef<HTMLVideoElement>(null);
   const uiContainer = useRef<HTMLDivElement>(null);
   const [manifestUri, setManifestUri] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const { slug } = useParams<{ slug: string }>();
 
   const fetchManifest = async () => {
@@ -91,7 +96,12 @@ const Player = () => {
   useEffect(() => {
     if (!manifestUri || !videoElement.current || !uiContainer.current) return;
 
-    initPlayer(manifestUri, videoElement.current, uiContainer.current);
+    initPlayer(
+      manifestUri,
+      videoElement.current,
+      uiContainer.current,
+      setLoaded
+    );
   }, [manifestUri, slug]);
 
   useEffect(() => {
@@ -101,20 +111,41 @@ const Player = () => {
   }, []);
 
   return (
-    <div>
-      <div id="video-container" ref={uiContainer}>
-        <video
-          data-shaka-player
-          ref={videoElement}
-          autoPlay
-          muted
-          style={{
-            width: "100%",
-            height: "100%"
+    <>
+      {!loaded && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "#1c1c1c",
+            zIndex: 100,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center"
           }}
-        />
+        >
+          <CircularProgress />
+        </Box>
+      )}
+      <div>
+        <div id="video-container" ref={uiContainer}>
+          <video
+            data-shaka-player
+            ref={videoElement}
+            autoPlay
+            muted
+            style={{
+              width: "100%",
+              height: "100%",
+              zIndex: 1
+            }}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
