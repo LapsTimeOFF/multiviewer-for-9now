@@ -63,8 +63,10 @@ const LiveEventGroup: FC<Props> = ({ switcherRail }) => {
       const next = items
         .filter((item) => new Date(item.startDate) > new Date())
         .sort((a, b) => {
+          if (!a.startDate || !b.startDate) return 0;
           return (
-            new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+            new Date(a.startDate ?? 0).getTime() -
+            new Date(b.startDate ?? 0).getTime()
           );
         })[0];
 
