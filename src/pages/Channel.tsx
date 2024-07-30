@@ -121,6 +121,12 @@ const Channel = () => {
         </Box>
       )}
       <div>
+        <div
+          className="draggable"
+          style={{
+            zIndex: 1
+          }}
+        />
         <div id="video-container" ref={uiContainer}>
           <video
             data-shaka-player

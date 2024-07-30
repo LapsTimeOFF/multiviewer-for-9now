@@ -11,11 +11,11 @@ import path from "node:path";
 import os from "node:os";
 import http from "node:http";
 import handler from "serve-handler";
+import getPort from "get-port";
 
 import nineNow from "./utils/9now";
 import config from "./utils/config";
 import player from "./utils/player";
-import getPort from "get-port";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

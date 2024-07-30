@@ -2,6 +2,7 @@ import { BrowserWindow, ipcMain } from "electron";
 import { join, dirname } from "path";
 import { VITE_DEV_SERVER_URL } from "..";
 import { fileURLToPath } from "node:url";
+import { contextMenu } from "./contextMenu";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -39,6 +40,10 @@ const createPlayer = (path: string, port: string) => {
   } else {
     win.loadURL(`http://localhost:${port}/#${path}`);
   }
+
+  win.webContents.on("context-menu", () => {
+    contextMenu.popup({ window: win });
+  });
 };
 
 export default function () {

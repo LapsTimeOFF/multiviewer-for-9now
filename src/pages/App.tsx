@@ -113,9 +113,13 @@ function App() {
             }}
           />
           <Button
-            onClick={() => {
+            onClick={async () => {
               window.mv.config.set("token", token);
               setOpen(true);
+
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+
+              window.location.reload();
             }}
             variant="outlined"
             fullWidth
@@ -132,7 +136,6 @@ function App() {
               }
 
               setOpen(false);
-              location.reload();
             }}
             message="Token saved."
           />
