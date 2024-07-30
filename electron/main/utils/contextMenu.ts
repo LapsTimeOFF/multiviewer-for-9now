@@ -10,7 +10,7 @@ const contextTemplate: Array<
     }
   },
   {
-    label: "Close all players",
+    label: "Close all grids",
     click: () => {
       BrowserWindow.getAllWindows().forEach((win) => {
         if (win.webContents.getURL().includes("/grid")) {
@@ -20,7 +20,7 @@ const contextTemplate: Array<
     }
   },
   {
-    label: "Close other players",
+    label: "Close other grids",
     click: (_, win) => {
       BrowserWindow.getAllWindows().forEach((window) => {
         if (
@@ -50,6 +50,21 @@ const contextTemplate: Array<
   {
     label: "Set size",
     submenu: [
+      {
+        label: "Whole screen",
+        click: (_, win) => {
+          if (!win) return;
+          const display = screen.getPrimaryDisplay();
+          const { width, height } = display.workAreaSize;
+
+          win.setBounds({
+            x: 0,
+            y: 0,
+            width,
+            height
+          });
+        }
+      },
       {
         label: "Half screen",
         click: (_, win) => {
