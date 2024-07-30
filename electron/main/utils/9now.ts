@@ -1,5 +1,5 @@
 import { GetLiveExperience } from "../../../shared/getLiveExperienceTypes";
-import { ipcMain } from "electron";
+import { ipcMain, shell } from "electron";
 
 const getLiveExperience = async (token: string) => {
   const data = (await (
@@ -11,8 +11,15 @@ const getLiveExperience = async (token: string) => {
   return data;
 };
 
+const openWebsite = async () => {
+  shell.openExternal("https://www.9now.com.au/");
+};
+
 export default function () {
   ipcMain.handle("9now:getLiveExperience", async (event, token: string) => {
     return getLiveExperience(token);
+  });
+  ipcMain.handle("9now:openWebsite", async () => {
+    return openWebsite();
   });
 }

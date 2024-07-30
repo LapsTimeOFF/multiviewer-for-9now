@@ -4,13 +4,16 @@ import {
   Button,
   CircularProgress,
   Container,
+  IconButton,
   Snackbar,
   TextField,
-  Typography
+  Typography,
+  Link
 } from "@mui/material";
 import "../styles/App.css";
 import { ConfigSchema } from "shared/configType";
 import { GetLiveExperience } from "../../shared/getLiveExperienceTypes";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import Channel from "@/components/Channel";
 import LiveEventGroup from "@/components/LiveEventGroup";
 import useSWR from "swr";
@@ -57,44 +60,83 @@ function App() {
   if (!config.token)
     return (
       <Container>
-        <Typography>
-          To obtain your token go to https://www.9now.com.au/, open dev tools,
-          go to the localStorage and found the key &quot;_nine_token&quot;, copy
-          the key &quot;token&quot; in it and paste it below.
-        </Typography>
-        <TextField
-          label="token"
-          variant="outlined"
-          value={token}
-          fullWidth
-          onChange={(e) => {
-            setToken(e.target.value);
+        <Box
+          sx={{
+            // Center on screen the login form
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            alignItems: "center",
+            justifyContent: "center",
+            height: "100vh"
           }}
-        />
-        <Button
-          onClick={() => {
-            window.mv.config.set("token", token);
-            setOpen(true);
-          }}
-          variant="outlined"
-          fullWidth
-          color="success"
         >
-          Save
-        </Button>
-        <Snackbar
-          open={open}
-          autoHideDuration={6000}
-          onClose={(event: React.SyntheticEvent | Event, reason?: string) => {
-            if (reason === "clickaway") {
-              return;
-            }
+          <Typography variant="h2" textAlign={"center"}>
+            Welcome to MultiViewer for 9NOW
+          </Typography>
+          <Typography>
+            To obtain your token go to{" "}
+            <Link
+              sx={{
+                cursor: "pointer"
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                window.mv["9now"].openWebsite();
+              }}
+            >
+              https://www.9now.com.au/
+            </Link>
+            , login on the website, then open the DevTools (CTRL+Shift+I),
+            select the `Console` tab, and type{" "}
+            <code>
+              copy(JSON.parse(localStorage.getItem(&apos;_nine_token&apos;)).token)
+            </code>
+            <IconButton
+              onClick={() => {
+                navigator.clipboard.writeText(
+                  `copy(JSON.parse(localStorage.getItem('_nine_token')).token)`
+                );
+              }}
+            >
+              <ContentCopyIcon />
+            </IconButton>
+            , then paste the token here:
+          </Typography>
+          <TextField
+            label="token"
+            variant="outlined"
+            value={token}
+            fullWidth
+            onChange={(e) => {
+              setToken(e.target.value);
+            }}
+          />
+          <Button
+            onClick={() => {
+              window.mv.config.set("token", token);
+              setOpen(true);
+            }}
+            variant="outlined"
+            fullWidth
+            color="success"
+          >
+            Save
+          </Button>
+          <Snackbar
+            open={open}
+            autoHideDuration={6000}
+            onClose={(event: React.SyntheticEvent | Event, reason?: string) => {
+              if (reason === "clickaway") {
+                return;
+              }
 
-            setOpen(false);
-            location.reload();
-          }}
-          message="Token saved."
-        />{" "}
+              setOpen(false);
+              location.reload();
+            }}
+            message="Token saved."
+          />
+        </Box>
       </Container>
     );
 

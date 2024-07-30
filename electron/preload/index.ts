@@ -27,7 +27,8 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
 export const api = {
   "9now": {
     getLiveExperience: (token: string): Promise<GetLiveExperience> =>
-      ipcRenderer.invoke("9now:getLiveExperience", token)
+      ipcRenderer.invoke("9now:getLiveExperience", token),
+    openWebsite: () => ipcRenderer.invoke("9now:openWebsite")
   },
   player: {
     create: (path: string, port: string) =>
