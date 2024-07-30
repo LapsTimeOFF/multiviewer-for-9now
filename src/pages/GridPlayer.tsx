@@ -1,27 +1,37 @@
 import Player from "@/components/Player";
 import { Grid, Snackbar, Typography } from "@mui/material";
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { useParams } from "react-router-dom";
 
 const GridPlayer = () => {
   const [open, setOpen] = useState(true);
   const [draggable, setDraggable] = useState(false);
+  const [slug, setSlug] = useState<string[]>([]);
+  const [numRows, setNumRows] = useState<number>(0);
+  const [numCols, setNumCols] = useState<number>(0);
+  const { data } = useParams<{ data: string }>();
   useHotkeys("d", () => setDraggable((prev) => !prev));
 
   const handleClose = () => {
     setOpen(false);
   };
 
-  const slugs = [
-    "gem",
-    // "go",
-    "event-clyqisxa2000z0glelo3pdvmn",
-    "event-clyqisx6h00140glkl9ybny6f",
-    "event-clyqisx6m00130gqvsfhjh7it",
-    "event-clyqisx71000w0htkp0he72at"
-  ];
-  const numRows = Math.floor(Math.sqrt(slugs.length));
-  const numCols = Math.ceil(slugs.length / numRows);
+  useEffect(() => {
+    const fetchSlugs = async () => {
+      if (!data) return;
+      const slugs = JSON.parse(decodeURI(data)) as string[];
+
+      const numRows = Math.floor(Math.sqrt(slugs.length));
+      const numCols = Math.ceil(slugs.length / numRows);
+
+      setSlug(slugs);
+      setNumRows(numRows);
+      setNumCols(numCols);
+    };
+
+    fetchSlugs();
+  }, [data]);
 
   return (
     <>
@@ -41,7 +51,7 @@ const GridPlayer = () => {
             </Typography>
           </div>
         )}
-        {slugs.map((slug) => (
+        {slug.map((slug) => (
           <PlayerSlot
             key={slug}
             slug={slug}

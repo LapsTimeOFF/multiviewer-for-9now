@@ -6,17 +6,13 @@ import { contextMenu } from "./contextMenu";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const createPlayer = (path: string, port: string, numSlugs: string) => {
-  const slugs = parseInt(numSlugs);
-
-  console.log({ numSlugs, slugs });
-
+const createPlayer = (path: string, port: string, slugs: string[]) => {
   let win: BrowserWindow | null = null;
   const preload = join(__dirname, "../preload/index.mjs");
 
   // Calculate the number of rows and columns
-  const numRows = Math.floor(Math.sqrt(slugs));
-  const numCols = Math.ceil(slugs / numRows);
+  const numRows = Math.floor(Math.sqrt(slugs.length));
+  const numCols = Math.ceil(slugs.length / numRows);
 
   // Calculate the dimensions of each player window to maintain a 16:9 aspect ratio
   const playerWidth = 1920 / numCols;
@@ -26,17 +22,8 @@ const createPlayer = (path: string, port: string, numSlugs: string) => {
   const mainWindowWidth = playerWidth * numCols;
   const mainWindowHeight = playerHeight * numRows;
 
-  console.log({
-    numRows,
-    numCols,
-    playerHeight,
-    playerWidth,
-    mainWindowHeight,
-    mainWindowWidth
-  });
-
   win = new BrowserWindow({
-    title: "Main window",
+    title: "Grid - MV 9NOW",
     icon: join(process.env.VITE_PUBLIC, "favicon.ico"),
     webPreferences: {
       preload
@@ -74,8 +61,8 @@ const createPlayer = (path: string, port: string, numSlugs: string) => {
 export default function () {
   ipcMain.handle(
     "player:create",
-    async (event, path: string, port: string, numSlugs: string) => {
-      return createPlayer(path, port, numSlugs);
+    async (_, path: string, port: string, slugs: string[]) => {
+      return createPlayer(path, port, slugs);
     }
   );
 }

@@ -19,7 +19,7 @@ const router = createHashRouter([
     element: <App />
   },
   {
-    path: "/grid",
+    path: "/grid/:data",
     element: <GridPlayer />
   }
 ]);

@@ -31,8 +31,8 @@ export const api = {
     openWebsite: () => ipcRenderer.invoke("9now:openWebsite")
   },
   player: {
-    create: (path: string, port: string, numberOfSlugs: string) =>
-      ipcRenderer.invoke("player:create", path, port, numberOfSlugs)
+    create: (path: string, port: string, slugList: string[]) =>
+      ipcRenderer.invoke("player:create", path, port, slugList)
   },
   config: {
     set: (key: keyof ConfigSchema, value: unknown) => {

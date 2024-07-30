@@ -1,6 +1,7 @@
 import {
+  Box,
   Card,
-  CardActionArea,
+  Checkbox,
   CardContent,
   CardMedia,
   Stack,
@@ -12,9 +13,11 @@ import { SwitcherRail } from "shared/getLiveExperienceTypes";
 
 interface Props {
   channel: SwitcherRail;
+  gridList: string[];
+  setGridList: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-const Channel: FC<Props> = ({ channel }) => {
+const Channel: FC<Props> = ({ channel, gridList, setGridList }) => {
   const currentAiring = channel.airings?.find(
     (a) =>
       new Date(a.startDate) < new Date() && new Date(a.endDate) > new Date()
@@ -22,12 +25,30 @@ const Channel: FC<Props> = ({ channel }) => {
 
   return (
     <Card>
-      <CardActionArea
-        onClick={() => {
-          // window.mv.player.create(`/channel/${channel.slug}`, location.port);
-          window.navigator.clipboard.writeText(channel.slug);
-        }}
-      >
+      <Stack direction="row" spacing={2}>
+        <Box
+          sx={{
+            w: 24,
+            h: 24,
+            pl: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Checkbox
+            checked={gridList.includes(channel.slug)}
+            onChange={(e) => {
+              if (e.target.checked) {
+                setGridList((prev) => [...prev, channel.slug]);
+              } else {
+                setGridList((prev) =>
+                  prev.filter((slug) => slug !== channel.slug)
+                );
+              }
+            }}
+          />
+        </Box>
         <Stack direction="row" spacing={2}>
           <CardMedia
             component="img"
@@ -49,7 +70,7 @@ const Channel: FC<Props> = ({ channel }) => {
             </Typography>
           </CardContent>
         </Stack>
-      </CardActionArea>
+      </Stack>
     </Card>
   );
 };

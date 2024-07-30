@@ -10,6 +10,7 @@ import {
   Typography,
   Link
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import "../styles/App.css";
 import { ConfigSchema } from "shared/configType";
 import { GetLiveExperience } from "../../shared/getLiveExperienceTypes";
@@ -42,6 +43,7 @@ const fetchLiveExperience = async () => {
 function App() {
   const [token, setToken] = useState("");
   const [open, setOpen] = useState(false);
+  const [gridList, setGridList] = useState<string[]>([]);
 
   const [config, setConfig] = useState<ConfigSchema>({});
   const { data: liveExperience, isLoading } = useSWR<
@@ -56,6 +58,15 @@ function App() {
 
     fetchConfig();
   }, []);
+
+  const openGrid = async () => {
+    await window.mv.player.create(
+      `/grid/${encodeURI(JSON.stringify(gridList))}`,
+      location.port,
+      gridList
+    );
+    setGridList([]);
+  };
 
   if (!config.token)
     return (
@@ -154,46 +165,109 @@ function App() {
   }
 
   return (
-    <Container>
-      <Typography variant="h3" textAlign={"center"}>
-        Welcome back!
-      </Typography>
+    <>
+      <Container>
+        <Typography variant="h3" textAlign={"center"}>
+          Welcome back!
+        </Typography>
 
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-          mt: 2
-        }}
-      >
-        {liveExperience?.data.getLXP.switcherRail
-          .filter((r) => r.type === "channel")
-          .sort((a, b) => {
-            if (a.name < b.name) {
-              return -1;
-            }
-            if (a.name > b.name) {
-              return 1;
-            }
-            return 0;
-          })
-          .map((r) => <Channel channel={r} key={r.id} />)}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            mt: 2
+          }}
+        >
+          <Box
+            sx={{
+              width: "100%"
+            }}
+          >
+            <Button
+              variant="contained"
+              onClick={openGrid}
+              sx={{
+                width: "96%"
+              }}
+            >
+              Open selected grid
+            </Button>
+            <IconButton
+              onClick={() => {
+                setGridList([]);
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
 
-        {liveExperience?.data.getLXP.switcherRail
-          .filter((r) => r.type === "live-event-group")
-          .sort((a, b) => {
-            if (a.name < b.name) {
-              return -1;
-            }
-            if (a.name > b.name) {
-              return 1;
-            }
-            return 0;
-          })
-          .map((r) => <LiveEventGroup switcherRail={r} key={r.id} />)}
-      </Box>
-    </Container>
+          {liveExperience?.data.getLXP.switcherRail
+            .filter((r) => r.type === "channel")
+            .sort((a, b) => {
+              if (a.name < b.name) {
+                return -1;
+              }
+              if (a.name > b.name) {
+                return 1;
+              }
+              return 0;
+            })
+            .map((r) => (
+              <Channel
+                channel={r}
+                key={r.id}
+                gridList={gridList}
+                setGridList={setGridList}
+              />
+            ))}
+
+          {liveExperience?.data.getLXP.switcherRail
+            .filter((r) => r.type === "live-event-group")
+            .sort((a, b) => {
+              if (a.name < b.name) {
+                return -1;
+              }
+              if (a.name > b.name) {
+                return 1;
+              }
+              return 0;
+            })
+            .map((r) => (
+              <LiveEventGroup
+                switcherRail={r}
+                key={r.id}
+                gridList={gridList}
+                setGridList={setGridList}
+              />
+            ))}
+
+          <Box
+            sx={{
+              width: "100%",
+              mb: 2
+            }}
+          >
+            <Button
+              variant="contained"
+              onClick={openGrid}
+              sx={{
+                width: "96%"
+              }}
+            >
+              Open selected grid
+            </Button>
+            <IconButton
+              onClick={() => {
+                setGridList([]);
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </Box>
+      </Container>
+    </>
   );
 }
 
