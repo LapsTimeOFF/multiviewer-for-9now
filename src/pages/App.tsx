@@ -273,6 +273,27 @@ function App() {
                 olympicsFilter={olypicsFilter}
               />
             ))}
+
+          <Box
+            sx={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              mb: 2
+            }}
+          >
+            <Button variant="contained" onClick={openGrid}>
+              Open selected grid
+              {gridList.length > 0 ? ` (${gridList.length} streams)` : ""}
+            </Button>
+            <IconButton
+              onClick={() => {
+                setGridList([]);
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
         </Box>
       </Container>
     </>
