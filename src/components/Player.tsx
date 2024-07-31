@@ -40,6 +40,18 @@ async function initPlayer(
       enableKeyboardPlaybackControls: false
     } as shaka.extern.UIConfiguration);
 
+    player.configure({
+      streaming: {
+        retryParameters: {
+          timeout: 30_000, // timeout in ms, after which we abort; 0 means never
+          maxAttempts: 128, // the maximum number of requests before we fail
+          baseDelay: 1000, // the base delay in ms between retries
+          backoffFactor: 4, // the multiplicative backoff factor between retries
+          fuzzFactor: 0.5 // the fuzz factor to apply to each retry delay
+        }
+      }
+    });
+
     await player.load(manifestUri);
     console.log("The video has now been loaded!");
     setLoaded(true);
@@ -141,7 +153,8 @@ const Player: FC<Props> = ({ slug }) => {
         style={{
           height: "100%",
           width: "100%",
-          position: "relative"
+          position: "relative",
+          display: loaded ? "block" : "none"
         }}
       >
         <div

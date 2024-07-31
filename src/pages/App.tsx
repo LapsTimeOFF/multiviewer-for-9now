@@ -213,17 +213,14 @@ function App() {
 
           <Box
             sx={{
-              width: "100%"
+              width: "100%",
+              display: "flex",
+              justifyContent: "center"
             }}
           >
-            <Button
-              variant="contained"
-              onClick={openGrid}
-              sx={{
-                width: "96%"
-              }}
-            >
+            <Button variant="contained" onClick={openGrid}>
               Open selected grid
+              {gridList.length > 0 ? ` (${gridList.length} streams)` : ""}
             </Button>
             <IconButton
               onClick={() => {
@@ -276,30 +273,6 @@ function App() {
                 olympicsFilter={olypicsFilter}
               />
             ))}
-
-          <Box
-            sx={{
-              width: "100%",
-              mb: 2
-            }}
-          >
-            <Button
-              variant="contained"
-              onClick={openGrid}
-              sx={{
-                width: "96%"
-              }}
-            >
-              Open selected grid
-            </Button>
-            <IconButton
-              onClick={() => {
-                setGridList([]);
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
         </Box>
       </Container>
     </>
