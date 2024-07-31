@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any  */
-import { Box, CircularProgress } from "@mui/material";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
+import WarningIcon from "@mui/icons-material/Warning";
 import axios from "axios";
 import React, { FC, useEffect, useRef, useState } from "react";
 import "shaka-player/dist/controls.css";
@@ -7,6 +8,7 @@ import "../styles/Player.css";
 import shaka from "shaka-player/dist/shaka-player.ui";
 import { BrightcoveGetStream } from "shared/BrightcoveGetStream";
 import { LXPStream } from "shared/LXPStream";
+import Tesseract from "tesseract.js";
 
 async function initPlayer(
   manifestUri: string,
@@ -73,10 +75,13 @@ type Props = {
 };
 
 const Player: FC<Props> = ({ slug }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoElement = useRef<HTMLVideoElement>(null);
   const uiContainer = useRef<HTMLDivElement>(null);
+  const [LXP, setLXP] = useState<LXPStream | null>(null);
   const [manifestUri, setManifestUri] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [finished, setFinished] = useState(false);
 
   const fetchManifest = async () => {
     const token = (await window.mv.config.get()).token;
@@ -84,6 +89,8 @@ const Player: FC<Props> = ({ slug }) => {
       `https://api.9now.com.au/web/live-experience?device=web&slug=${slug}&streamParams=web%2Cchrome%2Cmacos&region=act&offset=0&token=${token}`
     );
     const LXP = (await response.json()) as LXPStream;
+
+    setLXP(LXP);
 
     if (LXP.data.getLXP.stream.video.url) {
       return LXP.data.getLXP.stream.video.url;
@@ -124,6 +131,45 @@ const Player: FC<Props> = ({ slug }) => {
     });
   }, []);
 
+  // OCR
+  useEffect(() => {
+    const captureFrame = (video: HTMLVideoElement) => {
+      const canvas = canvasRef.current!;
+      const context = canvas.getContext("2d")!;
+
+      // Set canvas dimensions to match video dimensions
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/png");
+    };
+
+    const performOCR = async (dataUrl: string) => {
+      const result = await Tesseract.recognize(dataUrl, "eng");
+      const text = result.data.text;
+      console.log("OCR Result:", text);
+      // Check for the presence of specific text
+      if (text.includes("Want more action")) {
+        setFinished(true);
+      }
+    };
+
+    const checkTextInFrame = () => {
+      if (videoElement.current) {
+        const frame = captureFrame(videoElement.current);
+
+        performOCR(frame);
+      }
+    };
+
+    const intervalId = setInterval(checkTextInFrame, 15000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
   return (
     <div
       style={{
@@ -143,10 +189,16 @@ const Player: FC<Props> = ({ slug }) => {
             zIndex: 100,
             display: "flex",
             justifyContent: "center",
-            alignItems: "center"
+            alignItems: "center",
+            flexDirection: "column"
           }}
         >
           <CircularProgress />
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            {LXP
+              ? LXP.data.getLXP.stream.display.listings[0].title
+              : "Loading..."}
+          </Typography>
         </Box>
       )}
       <div
@@ -157,6 +209,42 @@ const Player: FC<Props> = ({ slug }) => {
           display: loaded ? "block" : "none"
         }}
       >
+        {finished && (
+          <Box
+            sx={{
+              position: "absolute",
+              width: "100%",
+              height: "100%",
+              backgroundColor: "rgba(28, 28, 28, 0.8)",
+              zIndex: 100,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              flexDirection: "column",
+              gap: 2
+            }}
+          >
+            <WarningIcon />
+            <Typography variant="h6" sx={{ mt: 2 }}>
+              It looks like this program has ended! You will soon be able to
+              automatically switch of program.
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => {
+                setFinished(false);
+              }}
+            >
+              My program is not done!
+            </Button>
+          </Box>
+        )}
+        <canvas
+          style={{
+            display: "none"
+          }}
+          ref={canvasRef}
+        />
         <div
           id="video-container"
           style={{

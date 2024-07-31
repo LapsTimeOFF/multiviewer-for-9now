@@ -33,7 +33,8 @@
     "react-router-dom": "^6.25.1",
     "serve-handler": "^6.1.5",
     "shaka-player": "^4.10.9",
-    "swr": "^2.2.5"
+    "swr": "^2.2.5",
+    "tesseract.js": "^5.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
