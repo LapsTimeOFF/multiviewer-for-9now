@@ -34,8 +34,6 @@ const fetchLiveExperience = async () => {
     )
   ).json()) as GetLiveExperience;
 
-  console.log(data);
-
   if (!data.data) {
     window.mv.config.set("token", "");
     window.location.reload();
@@ -218,7 +216,11 @@ function App() {
               justifyContent: "center"
             }}
           >
-            <Button variant="contained" onClick={openGrid}>
+            <Button
+              variant="contained"
+              onClick={openGrid}
+              disabled={gridList.length < 1}
+            >
               Open selected grid
               {gridList.length > 0 ? ` (${gridList.length} streams)` : ""}
             </Button>
@@ -282,7 +284,11 @@ function App() {
               mb: 2
             }}
           >
-            <Button variant="contained" onClick={openGrid}>
+            <Button
+              variant="contained"
+              onClick={openGrid}
+              disabled={gridList.length < 1}
+            >
               Open selected grid
               {gridList.length > 0 ? ` (${gridList.length} streams)` : ""}
             </Button>

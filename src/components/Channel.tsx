@@ -5,7 +5,8 @@ import {
   CardContent,
   CardMedia,
   Stack,
-  Typography
+  Typography,
+  CardActionArea
 } from "@mui/material";
 import moment from "moment";
 import React, { FC } from "react";
@@ -64,27 +65,37 @@ const Channel: FC<Props> = ({
             }}
           />
         </Box>
-        <Stack direction="row" spacing={2}>
-          <CardMedia
-            component="img"
-            sx={{
-              width: 125,
-              height: 125
-            }}
-            image={channel.switcherLogo.sizes.w768}
-            alt={channel.switcherLogo.alt}
-          />
-          <CardContent>
-            <Typography variant="h4">{channel.name}</Typography>
-            <Typography variant="body1">
-              {currentAiring?.title || "No current airing"}
-            </Typography>
-            <Typography variant="subtitle2" color="#c4c4c4">
-              {moment(currentAiring?.startDate).format("h:mm a")} -{" "}
-              {moment(currentAiring?.endDate).format("h:mm a")}
-            </Typography>
-          </CardContent>
-        </Stack>
+        <CardActionArea
+          onClick={() => {
+            window.mv.player.create(
+              `/grid/${encodeURI(JSON.stringify([channel.slug]))}`,
+              location.port,
+              [channel.slug]
+            );
+          }}
+        >
+          <Stack direction="row" spacing={2}>
+            <CardMedia
+              component="img"
+              sx={{
+                width: 125,
+                height: 125
+              }}
+              image={channel.switcherLogo.sizes.w768}
+              alt={channel.switcherLogo.alt}
+            />
+            <CardContent>
+              <Typography variant="h4">{channel.name}</Typography>
+              <Typography variant="body1">
+                {currentAiring?.title || "No current airing"}
+              </Typography>
+              <Typography variant="subtitle2" color="#c4c4c4">
+                {moment(currentAiring?.startDate).format("h:mm a")} -{" "}
+                {moment(currentAiring?.endDate).format("h:mm a")}
+              </Typography>
+            </CardContent>
+          </Stack>
+        </CardActionArea>
       </Stack>
     </Card>
   );

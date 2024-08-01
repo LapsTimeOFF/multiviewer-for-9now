@@ -13,18 +13,15 @@ const store = new Store({
 
 const set = (key: string, value: unknown) => {
   store.set(key, value);
-  console.log(key, value);
 };
 
 const get = (key?: string) => {
-  console.log("get", key);
   if (!key || key === "") return store.store;
   return store.get(key);
 };
 
 const remove = (key: string) => {
   store.delete(key);
-  console.log("delete", key);
 };
 
 export default function () {

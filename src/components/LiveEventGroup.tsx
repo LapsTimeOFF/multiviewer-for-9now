@@ -25,7 +25,7 @@ interface Props {
   olympicsFilter: boolean;
 }
 
-const nonOlympicsSlug = [
+export const nonOlympicsSlug = [
   "100-footy",
   "60-minutes-australia",
   "9crime",
@@ -222,50 +222,62 @@ const Stream: FC<StreamProps> = ({ stream, gridList, setGridList }) => {
             }}
           />
         </Box>
-        <CardMedia
-          component="img"
-          sx={{
-            width: 800 / 3,
-            height: 150
+        <CardActionArea
+          onClick={() => {
+            window.mv.player.create(
+              `/grid/${encodeURI(JSON.stringify([stream.slug]))}`,
+              location.port,
+              [stream.slug]
+            );
           }}
-          image={stream.image.sizes.w320}
-          alt={stream.image.alt}
-        />
-        <CardContent>
-          <Typography
-            variant="h5"
-            sx={{
-              opacity: isLive() ? 1 : 0.5
-            }}
-          >
-            {stream.name}{" "}
-            <FiberManualRecordIcon
-              color="error"
+        >
+          <Stack direction="row" spacing={2}>
+            <CardMedia
+              component="img"
               sx={{
-                display: isLive() ? "inline" : "none",
-                pt: 0.5,
-                animation: "flashLive 1.5s infinite"
+                width: 800 / 3,
+                height: 150
               }}
+              image={stream.image.sizes.w320}
+              alt={stream.image.alt}
             />
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              opacity: isLive() ? 1 : 0.5
-            }}
-          >
-            {stream.description}
-          </Typography>
-          <Typography
-            variant="subtitle2"
-            sx={{
-              opacity: isLive() ? 1 : 0.5
-            }}
-          >
-            {moment(stream.startDate).format("h:mm a")} -{" "}
-            {moment(stream.endDate).format("h:mm a")}
-          </Typography>
-        </CardContent>
+            <CardContent>
+              <Typography
+                variant="h5"
+                sx={{
+                  opacity: isLive() ? 1 : 0.5
+                }}
+              >
+                {stream.name}{" "}
+                <FiberManualRecordIcon
+                  color="error"
+                  sx={{
+                    display: isLive() ? "inline" : "none",
+                    pt: 0.5,
+                    animation: "flashLive 1.5s infinite"
+                  }}
+                />
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  opacity: isLive() ? 1 : 0.5
+                }}
+              >
+                {stream.description}
+              </Typography>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  opacity: isLive() ? 1 : 0.5
+                }}
+              >
+                {moment(stream.startDate).format("h:mm a")} -{" "}
+                {moment(stream.endDate).format("h:mm a")}
+              </Typography>
+            </CardContent>
+          </Stack>
+        </CardActionArea>
       </Stack>
     </Card>
   );
