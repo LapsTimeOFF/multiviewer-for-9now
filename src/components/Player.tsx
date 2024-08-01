@@ -68,7 +68,7 @@ async function initPlayer(
     });
 
     await player.load(manifestUri);
-    console.log("The video has now been loaded!");
+
     setLoaded(true);
   } catch (e) {
     onError(e);
@@ -295,8 +295,6 @@ const Player: FC<Props> = ({ slug }) => {
       );
 
       setEventsLive(eventsLive);
-
-      console.log({ programsLive, eventsLive });
     };
 
     const intervalId = setInterval(checkTextInFrame, 15000);

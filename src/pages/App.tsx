@@ -34,8 +34,6 @@ const fetchLiveExperience = async () => {
     )
   ).json()) as GetLiveExperience;
 
-  console.log(data);
-
   if (!data.data) {
     window.mv.config.set("token", "");
     window.location.reload();
