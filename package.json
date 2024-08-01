@@ -1,7 +1,7 @@
 {
   "name": "multiviewer-for-9now",
   "displayName": "MultiViewer for 9NOW",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "main": "dist-electron/main/index.js",
   "description": "Watch many channels at the same time from 9NOW",
   "author": "Quentin Baguette",

@@ -37,6 +37,7 @@ const GridPlayer = () => {
 
     fetchSlugs();
     window.player = new Map();
+    window.ui = new Map();
   }, [data]);
 
   return (
