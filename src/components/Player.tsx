@@ -95,6 +95,8 @@ const Player: FC<Props> = ({ slug }) => {
   const [manifestUri, setManifestUri] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [delayed, setDelayed] = useState(false);
+  const [ignoreDelayed, setIgnoreDelayed] = useState(false);
   const [currentSlug, setCurrentSlug] = useState(slug);
   const [programsLive, setProgramsLive] = useState<
     (SwitcherRail | undefined)[]
@@ -191,10 +193,21 @@ const Player: FC<Props> = ({ slug }) => {
     const performOCR = async (dataUrl: string) => {
       const result = await Tesseract.recognize(dataUrl, "eng");
       const text = result.data.text;
+
+      console.log(text);
+
       // Check for the presence of specific text
       if (text.includes("Want more action")) {
         await fetchProgramsLive();
         setFinished(true);
+        setIgnoreDelayed(true);
+        setDelayed(false);
+      }
+
+      if (text.toLowerCase().includes("delayed")) {
+        await fetchProgramsLive();
+        setFinished(false);
+        setDelayed(true);
       }
     };
 
@@ -343,7 +356,7 @@ const Player: FC<Props> = ({ slug }) => {
           display: loaded ? "block" : "none"
         }}
       >
-        {finished && (
+        {(finished || (delayed && !ignoreDelayed)) && (
           <Box
             sx={{
               position: "absolute",
@@ -360,8 +373,11 @@ const Player: FC<Props> = ({ slug }) => {
           >
             <WarningIcon />
             <Typography variant="h6" sx={{ mt: 2 }}>
-              It looks like this program has ended (or not started yet)! Select
-              below a new program:
+              {finished &&
+                "It looks like this program has ended (or not started yet)! Select below a new program:"}
+              {delayed &&
+                !ignoreDelayed &&
+                "It looks like this program has been delayed! You can select a new program meanwhile:"}
             </Typography>
             <FormControl
               sx={{
@@ -454,14 +470,27 @@ const Player: FC<Props> = ({ slug }) => {
                   )}
               </Select>
             </FormControl>
-            <Button
-              variant="contained"
-              onClick={() => {
-                setFinished(false);
-              }}
-            >
-              My program is not done!
-            </Button>
+            {finished && (
+              <Button
+                variant="contained"
+                onClick={() => {
+                  setFinished(false);
+                }}
+              >
+                My program is not done!
+              </Button>
+            )}
+            {delayed && !ignoreDelayed && (
+              <Button
+                variant="contained"
+                onClick={() => {
+                  setIgnoreDelayed(true);
+                  setDelayed(false);
+                }}
+              >
+                I wanna keep my program!
+              </Button>
+            )}
           </Box>
         )}
         <canvas
