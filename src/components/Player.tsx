@@ -55,6 +55,8 @@ async function initPlayer(
       enableKeyboardPlaybackControls: false
     } as shaka.extern.UIConfiguration);
 
+    window.ui?.set(slug, ui);
+
     player.configure({
       streaming: {
         retryParameters: {
@@ -167,6 +169,7 @@ const Player: FC<Props> = ({ slug }) => {
 
     return () => {
       window.player?.get(currentSlug)?.destroy();
+      window.ui?.get(currentSlug)?.destroy();
     };
   }, [manifestUri, currentSlug]);
 

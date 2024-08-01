@@ -7,5 +7,6 @@ declare global {
     ipcRenderer: import("electron").IpcRenderer;
     mv: typeof api;
     player: Map<string, shaka.Player> | null | undefined;
+    ui: Map<string, shaka.ui.Overlay> | null | undefined;
   }
 }
