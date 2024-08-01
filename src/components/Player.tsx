@@ -1,5 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any  */
-import { Box, Button, CircularProgress, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Typography
+} from "@mui/material";
 import WarningIcon from "@mui/icons-material/Warning";
 import axios from "axios";
 import React, { FC, useEffect, useRef, useState } from "react";
@@ -9,6 +18,9 @@ import shaka from "shaka-player/dist/shaka-player.ui";
 import { BrightcoveGetStream } from "shared/BrightcoveGetStream";
 import { LXPStream } from "shared/LXPStream";
 import Tesseract from "tesseract.js";
+import { GetLiveExperience, SwitcherRail } from "shared/getLiveExperienceTypes";
+import { Item, LiveExperienceGroup } from "shared/LXPGroupTypes";
+import { nonOlympicsSlug } from "./LiveEventGroup";
 
 async function initPlayer(
   manifestUri: string,
@@ -82,6 +94,10 @@ const Player: FC<Props> = ({ slug }) => {
   const [manifestUri, setManifestUri] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [programsLive, setProgramsLive] = useState<
+    (SwitcherRail | undefined)[]
+  >([]);
+  const [eventsLive, setEventsLive] = useState<(Item | undefined)[]>([]);
 
   const fetchManifest = async () => {
     const token = (await window.mv.config.get()).token;
@@ -151,6 +167,7 @@ const Player: FC<Props> = ({ slug }) => {
       console.log("OCR Result:", text);
       // Check for the presence of specific text
       if (text.includes("Want more action")) {
+        await fetchProgramsLive();
         setFinished(true);
       }
     };
@@ -161,6 +178,73 @@ const Player: FC<Props> = ({ slug }) => {
 
         performOCR(frame);
       }
+    };
+
+    const fetchProgramsLive = async () => {
+      const config = await window.mv.config.get();
+
+      if (!config.token) return;
+
+      const { data } = (await (
+        await fetch(
+          `https://api.9now.com.au/web/live-experience?device=web&slug=gem&streamParams=web%2Cchrome%2Cmacos&region=nsw&offset=0&token=${config.token}`
+        )
+      ).json()) as GetLiveExperience;
+
+      setProgramsLive(
+        await Promise.all(
+          data.getLXP.switcherRail.map(async (switcherRail) => {
+            if (switcherRail.type === "channel") {
+              const currentlyAiring = switcherRail.airings?.find((airing) => {
+                const startDate = new Date(airing.startDate);
+                const endDate = new Date(airing.endDate);
+                const now = new Date();
+
+                return startDate < now && endDate > now;
+              });
+
+              if (
+                !currentlyAiring?.title.includes("Paris") ||
+                !currentlyAiring?.title.includes("Olympics")
+              )
+                return;
+
+              return switcherRail;
+            }
+          })
+        )
+      );
+
+      const eventsLive: (Item | undefined)[] = [];
+
+      data.getLXP.switcherRail.forEach(async (switcherRail, index) => {
+        const res = await fetch(
+          `https://api.9now.com.au/web/metadata/live-experience?device=web&slug=${switcherRail.slug}&streamParams=web%2Cchrome%2Cmacos&region=act&offset=0&token=${config.token}`
+        );
+
+        if (!res.ok) {
+          console.error(`Failed to fetch LXP data for ${slug}`);
+          throw new Error("Failed to fetch LXP data");
+        }
+
+        const group = (await res.json()) as LiveExperienceGroup;
+
+        if (nonOlympicsSlug.includes(group.data.getLXP.promoRail.slug)) return;
+
+        const lives = group.data.getLXP.promoRail.items.map((stream) => {
+          const currentlyAiring =
+            new Date(stream.startDate) < new Date() &&
+            new Date(stream.endDate) > new Date();
+
+          return currentlyAiring ? stream : undefined;
+        });
+
+        eventsLive.push(...lives);
+
+        if (index === data.getLXP.switcherRail.length - 1) {
+          setEventsLive(eventsLive);
+        }
+      });
     };
 
     const intervalId = setInterval(checkTextInFrame, 15000);
@@ -226,9 +310,60 @@ const Player: FC<Props> = ({ slug }) => {
           >
             <WarningIcon />
             <Typography variant="h6" sx={{ mt: 2 }}>
-              It looks like this program has ended! You will soon be able to
-              automatically switch of program.
+              It looks like this program has ended (or not started yet)! Select
+              below a new program:
             </Typography>
+            <FormControl
+              sx={{
+                maxWidth: 320
+              }}
+              fullWidth
+            >
+              <InputLabel id="demo-simple-select-label">
+                Currently Live
+              </InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                label="Currently Live"
+              >
+                {programsLive.map((program) => {
+                  if (!program) return;
+
+                  return (
+                    <MenuItem key={program.slug} value={program.slug}>
+                      {program.name} -{" "}
+                      {
+                        program.airings?.find((airing) => {
+                          const startDate = new Date(airing.startDate);
+                          const endDate = new Date(airing.endDate);
+                          const now = new Date();
+
+                          return startDate < now && endDate > now;
+                        })?.title
+                      }
+                    </MenuItem>
+                  );
+                })}
+                {eventsLive.map((event) => {
+                  if (!event) return;
+
+                  return (
+                    <MenuItem key={event.slug} value={event.slug}>
+                      {event.displayName} - {event.subtitle}
+                    </MenuItem>
+                  );
+                })}
+
+                {eventsLive.filter((item) => item !== undefined).length === 0 &&
+                  programsLive.filter((item) => item !== undefined).length ===
+                    0 && (
+                    <MenuItem disabled>
+                      Sorry! No programs are currently live...
+                    </MenuItem>
+                  )}
+              </Select>
+            </FormControl>
             <Button
               variant="contained"
               onClick={() => {

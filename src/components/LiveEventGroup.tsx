@@ -25,7 +25,7 @@ interface Props {
   olympicsFilter: boolean;
 }
 
-const nonOlympicsSlug = [
+export const nonOlympicsSlug = [
   "100-footy",
   "60-minutes-australia",
   "9crime",
