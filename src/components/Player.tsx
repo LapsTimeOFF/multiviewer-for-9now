@@ -2,14 +2,19 @@
 import {
   Box,
   Button,
+  CardContent,
   CircularProgress,
+  Dialog,
+  DialogTitle,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   Select,
   Typography
 } from "@mui/material";
 import WarningIcon from "@mui/icons-material/Warning";
+import EditIcon from "@mui/icons-material/Edit";
 import axios from "axios";
 import React, { FC, useCallback, useEffect, useRef, useState } from "react";
 import "shaka-player/dist/controls.css";
@@ -124,6 +129,8 @@ const Player: FC<Props> = ({ slug }) => {
       | undefined
     )[]
   >([]);
+  const [hover, setHover] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const fetchManifest = useCallback(async () => {
     const token = (await window.mv.config.get()).token;
@@ -169,9 +176,101 @@ const Player: FC<Props> = ({ slug }) => {
 
     return () => {
       window.player?.get(currentSlug)?.destroy();
+      window.player?.delete(currentSlug);
       window.ui?.get(currentSlug)?.destroy();
+      window.ui?.delete(currentSlug);
     };
   }, [manifestUri, currentSlug]);
+
+  const fetchProgramsLive = async () => {
+    const config = await window.mv.config.get();
+
+    if (!config.token) return;
+
+    const { data } = (await (
+      await fetch(
+        `https://api.9now.com.au/web/live-experience?device=web&slug=gem&streamParams=web%2Cchrome%2Cmacos&region=nsw&offset=0&token=${config.token}`
+      )
+    ).json()) as GetLiveExperience;
+
+    setProgramsLive(
+      await Promise.all(
+        data.getLXP.switcherRail.map(async (switcherRail) => {
+          if (switcherRail.type === "channel") {
+            const currentlyAiring = switcherRail.airings?.find((airing) => {
+              const startDate = new Date(airing.startDate);
+              const endDate = new Date(airing.endDate);
+              const now = new Date();
+
+              return startDate < now && endDate > now;
+            });
+
+            if (
+              currentlyAiring?.title.includes("Paris") ||
+              currentlyAiring?.title.includes("Olympic")
+            )
+              return switcherRail;
+
+            return;
+          }
+        })
+      )
+    );
+
+    const eventsLive: (
+      | {
+          sportName: string;
+          description: string;
+          displayName: string;
+          endDate: string;
+          id: number;
+          name: string;
+          slug: string;
+          promoStartDate: string;
+          programStartDate: any;
+          programEndDate: any;
+          startDate: string;
+          subtitle: string;
+          type: string;
+          image: object;
+        }
+      | undefined
+    )[] = [];
+
+    await Promise.all(
+      data.getLXP.switcherRail.map(async (switcherRail) => {
+        const res = await fetch(
+          `https://api.9now.com.au/web/metadata/live-experience?device=web&slug=${switcherRail.slug}&streamParams=web%2Cchrome%2Cmacos&region=act&offset=0&token=${config.token}`
+        );
+
+        if (!res.ok) {
+          console.error(`Failed to fetch LXP data for ${slug}`);
+          // throw new Error("Failed to fetch LXP data");
+        }
+
+        const group = (await res.json()) as LiveExperienceGroup;
+
+        if (nonOlympicsSlug.includes(group.data.getLXP.promoRail.slug)) return;
+
+        const lives = group.data.getLXP.promoRail.items.map((stream) => {
+          const currentlyAiring =
+            new Date(stream.startDate) < new Date() &&
+            new Date(stream.endDate) > new Date();
+
+          return currentlyAiring
+            ? {
+                ...stream,
+                sportName: group.data.getLXP.stream.display.tagline
+              }
+            : undefined;
+        });
+
+        eventsLive.push(...lives);
+      })
+    );
+
+    setEventsLive(eventsLive);
+  };
 
   useEffect(() => {
     fetchManifest().then((result) => {
@@ -222,97 +321,6 @@ const Player: FC<Props> = ({ slug }) => {
       }
     };
 
-    const fetchProgramsLive = async () => {
-      const config = await window.mv.config.get();
-
-      if (!config.token) return;
-
-      const { data } = (await (
-        await fetch(
-          `https://api.9now.com.au/web/live-experience?device=web&slug=gem&streamParams=web%2Cchrome%2Cmacos&region=nsw&offset=0&token=${config.token}`
-        )
-      ).json()) as GetLiveExperience;
-
-      setProgramsLive(
-        await Promise.all(
-          data.getLXP.switcherRail.map(async (switcherRail) => {
-            if (switcherRail.type === "channel") {
-              const currentlyAiring = switcherRail.airings?.find((airing) => {
-                const startDate = new Date(airing.startDate);
-                const endDate = new Date(airing.endDate);
-                const now = new Date();
-
-                return startDate < now && endDate > now;
-              });
-
-              if (
-                currentlyAiring?.title.includes("Paris") ||
-                currentlyAiring?.title.includes("Olympic")
-              )
-                return switcherRail;
-
-              return;
-            }
-          })
-        )
-      );
-
-      const eventsLive: (
-        | {
-            sportName: string;
-            description: string;
-            displayName: string;
-            endDate: string;
-            id: number;
-            name: string;
-            slug: string;
-            promoStartDate: string;
-            programStartDate: any;
-            programEndDate: any;
-            startDate: string;
-            subtitle: string;
-            type: string;
-            image: object;
-          }
-        | undefined
-      )[] = [];
-
-      await Promise.all(
-        data.getLXP.switcherRail.map(async (switcherRail) => {
-          const res = await fetch(
-            `https://api.9now.com.au/web/metadata/live-experience?device=web&slug=${switcherRail.slug}&streamParams=web%2Cchrome%2Cmacos&region=act&offset=0&token=${config.token}`
-          );
-
-          if (!res.ok) {
-            console.error(`Failed to fetch LXP data for ${slug}`);
-            throw new Error("Failed to fetch LXP data");
-          }
-
-          const group = (await res.json()) as LiveExperienceGroup;
-
-          if (nonOlympicsSlug.includes(group.data.getLXP.promoRail.slug))
-            return;
-
-          const lives = group.data.getLXP.promoRail.items.map((stream) => {
-            const currentlyAiring =
-              new Date(stream.startDate) < new Date() &&
-              new Date(stream.endDate) > new Date();
-
-            return currentlyAiring
-              ? {
-                  ...stream,
-                  sportName: group.data.getLXP.stream.display.tagline
-                }
-              : undefined;
-          });
-
-          eventsLive.push(...lives);
-        })
-      );
-
-      setEventsLive(eventsLive);
-    };
-
     const intervalId = setInterval(checkTextInFrame, 15000);
 
     return () => {
@@ -326,6 +334,8 @@ const Player: FC<Props> = ({ slug }) => {
         height: "100%",
         width: "100%"
       }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
     >
       {!loaded && (
         <Box
@@ -359,6 +369,121 @@ const Player: FC<Props> = ({ slug }) => {
           display: loaded ? "block" : "none"
         }}
       >
+        <IconButton
+          sx={{
+            position: "absolute",
+            zIndex: 10,
+            display: hover ? "block" : "none"
+          }}
+          onClick={async () => {
+            await fetchProgramsLive();
+            setOpen(true);
+          }}
+        >
+          <EditIcon />
+        </IconButton>
+        <Dialog
+          open={open}
+          onClose={() => {
+            setOpen(false);
+          }}
+        >
+          <DialogTitle>Change of stream: </DialogTitle>
+          <CardContent>
+            <FormControl fullWidth>
+              <Select
+                id="demo-simple-select"
+                onChange={(e) => {
+                  setLoaded(false);
+                  window.player?.get(currentSlug)?.destroy();
+                  setCurrentSlug(e.target.value as string);
+                  setOpen(false);
+                }}
+              >
+                {programsLive.filter((item) => item !== undefined).length >
+                  0 && <MenuItem disabled>Channels</MenuItem>}
+                {programsLive.map((program) => {
+                  if (!program) return;
+
+                  const alreadyOpen = window.player?.has(program.slug);
+
+                  return (
+                    <MenuItem
+                      key={program.slug}
+                      value={program.slug}
+                      disabled={alreadyOpen}
+                    >
+                      {program.name} -{" "}
+                      {
+                        program.airings?.find((airing) => {
+                          const startDate = new Date(airing.startDate);
+                          const endDate = new Date(airing.endDate);
+                          const now = new Date();
+
+                          return startDate < now && endDate > now;
+                        })?.title
+                      }
+                      {alreadyOpen ? " (already open)" : ""}
+                    </MenuItem>
+                  );
+                })}
+
+                {eventsLive.filter((item) => item !== undefined).length > 0 && (
+                  <MenuItem disabled>Live events</MenuItem>
+                )}
+                {eventsLive
+                  .sort((a, b) => {
+                    if (!a?.sportName || !b?.sportName) return 0;
+                    if (a.sportName < b.sportName) {
+                      return -1;
+                    }
+                    if (a.sportName > b.sportName) {
+                      return 1;
+                    }
+                    return 0;
+                  })
+                  .map((event) => {
+                    if (!event) return;
+
+                    const alreadyOpen = window.player?.has(event.slug);
+
+                    return (
+                      <MenuItem
+                        key={event.slug}
+                        value={event.slug}
+                        disabled={alreadyOpen}
+                      >
+                        <Typography>
+                          <b>{event.sportName}</b> | {event.displayName} -{" "}
+                          {event.subtitle}
+                          {alreadyOpen ? " (already open)" : ""}
+                        </Typography>
+                      </MenuItem>
+                    );
+                  })}
+
+                {eventsLive.filter((item) => item !== undefined).length === 0 &&
+                  programsLive.filter((item) => item !== undefined).length ===
+                    0 && (
+                    <MenuItem disabled>
+                      Sorry! No programs are currently live...
+                    </MenuItem>
+                  )}
+              </Select>
+            </FormControl>
+            <Button
+              fullWidth
+              onClick={() => {
+                setOpen(false);
+              }}
+              sx={{
+                mt: 2
+              }}
+            >
+              Cancel
+            </Button>
+          </CardContent>
+        </Dialog>
         {(finished || (delayed && !ignoreDelayed)) && (
           <Box
             sx={{
