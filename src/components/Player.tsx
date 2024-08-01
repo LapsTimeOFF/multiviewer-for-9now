@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import WarningIcon from "@mui/icons-material/Warning";
 import axios from "axios";
-import React, { FC, useEffect, useRef, useState } from "react";
+import React, { FC, useCallback, useEffect, useRef, useState } from "react";
 import "shaka-player/dist/controls.css";
 import "../styles/Player.css";
 import shaka from "shaka-player/dist/shaka-player.ui";
@@ -19,21 +19,22 @@ import { BrightcoveGetStream } from "shared/BrightcoveGetStream";
 import { LXPStream } from "shared/LXPStream";
 import Tesseract from "tesseract.js";
 import { GetLiveExperience, SwitcherRail } from "shared/getLiveExperienceTypes";
-import { Item, LiveExperienceGroup } from "shared/LXPGroupTypes";
+import { LiveExperienceGroup } from "shared/LXPGroupTypes";
 import { nonOlympicsSlug } from "./LiveEventGroup";
 
 async function initPlayer(
   manifestUri: string,
   video: HTMLVideoElement,
   uiContainer: HTMLDivElement,
-  setLoaded: (loaded: boolean) => void
+  setLoaded: (loaded: boolean) => void,
+  slug: string
 ) {
   shaka.polyfill.installAll();
 
   const player = new shaka.Player();
   await player.attach(video);
 
-  window.player = player;
+  window.player?.set(slug, player);
 
   player.addEventListener("error", onErrorEvent);
 
@@ -94,15 +95,36 @@ const Player: FC<Props> = ({ slug }) => {
   const [manifestUri, setManifestUri] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [currentSlug, setCurrentSlug] = useState(slug);
   const [programsLive, setProgramsLive] = useState<
     (SwitcherRail | undefined)[]
   >([]);
-  const [eventsLive, setEventsLive] = useState<(Item | undefined)[]>([]);
+  const [eventsLive, setEventsLive] = useState<
+    (
+      | {
+          sportName: string;
+          description: string;
+          displayName: string;
+          endDate: string;
+          id: number;
+          name: string;
+          slug: string;
+          promoStartDate: string;
+          programStartDate: any;
+          programEndDate: any;
+          startDate: string;
+          subtitle: string;
+          type: string;
+          image: object;
+        }
+      | undefined
+    )[]
+  >([]);
 
-  const fetchManifest = async () => {
+  const fetchManifest = useCallback(async () => {
     const token = (await window.mv.config.get()).token;
     const response = await fetch(
-      `https://api.9now.com.au/web/live-experience?device=web&slug=${slug}&streamParams=web%2Cchrome%2Cmacos&region=act&offset=0&token=${token}`
+      `https://api.9now.com.au/web/live-experience?device=web&slug=${currentSlug}&streamParams=web%2Cchrome%2Cmacos&region=act&offset=0&token=${token}`
     );
     const LXP = (await response.json()) as LXPStream;
 
@@ -128,7 +150,7 @@ const Player: FC<Props> = ({ slug }) => {
 
       return manifestUri;
     }
-  };
+  }, [currentSlug]);
 
   useEffect(() => {
     if (!manifestUri || !videoElement.current || !uiContainer.current) return;
@@ -137,15 +159,20 @@ const Player: FC<Props> = ({ slug }) => {
       manifestUri,
       videoElement.current,
       uiContainer.current,
-      setLoaded
+      setLoaded,
+      currentSlug
     );
-  }, [manifestUri, slug]);
+
+    return () => {
+      window.player?.get(currentSlug)?.destroy();
+    };
+  }, [manifestUri, currentSlug]);
 
   useEffect(() => {
     fetchManifest().then((result) => {
       setManifestUri(result);
     });
-  }, []);
+  }, [currentSlug]);
 
   // OCR
   useEffect(() => {
@@ -164,7 +191,6 @@ const Player: FC<Props> = ({ slug }) => {
     const performOCR = async (dataUrl: string) => {
       const result = await Tesseract.recognize(dataUrl, "eng");
       const text = result.data.text;
-      console.log("OCR Result:", text);
       // Check for the presence of specific text
       if (text.includes("Want more action")) {
         await fetchProgramsLive();
@@ -204,47 +230,73 @@ const Player: FC<Props> = ({ slug }) => {
               });
 
               if (
-                !currentlyAiring?.title.includes("Paris") ||
-                !currentlyAiring?.title.includes("Olympics")
+                currentlyAiring?.title.includes("Paris") ||
+                currentlyAiring?.title.includes("Olympic")
               )
-                return;
+                return switcherRail;
 
-              return switcherRail;
+              return;
             }
           })
         )
       );
 
-      const eventsLive: (Item | undefined)[] = [];
+      const eventsLive: (
+        | {
+            sportName: string;
+            description: string;
+            displayName: string;
+            endDate: string;
+            id: number;
+            name: string;
+            slug: string;
+            promoStartDate: string;
+            programStartDate: any;
+            programEndDate: any;
+            startDate: string;
+            subtitle: string;
+            type: string;
+            image: object;
+          }
+        | undefined
+      )[] = [];
 
-      data.getLXP.switcherRail.forEach(async (switcherRail, index) => {
-        const res = await fetch(
-          `https://api.9now.com.au/web/metadata/live-experience?device=web&slug=${switcherRail.slug}&streamParams=web%2Cchrome%2Cmacos&region=act&offset=0&token=${config.token}`
-        );
+      await Promise.all(
+        data.getLXP.switcherRail.map(async (switcherRail) => {
+          const res = await fetch(
+            `https://api.9now.com.au/web/metadata/live-experience?device=web&slug=${switcherRail.slug}&streamParams=web%2Cchrome%2Cmacos&region=act&offset=0&token=${config.token}`
+          );
 
-        if (!res.ok) {
-          console.error(`Failed to fetch LXP data for ${slug}`);
-          throw new Error("Failed to fetch LXP data");
-        }
+          if (!res.ok) {
+            console.error(`Failed to fetch LXP data for ${slug}`);
+            throw new Error("Failed to fetch LXP data");
+          }
 
-        const group = (await res.json()) as LiveExperienceGroup;
+          const group = (await res.json()) as LiveExperienceGroup;
 
-        if (nonOlympicsSlug.includes(group.data.getLXP.promoRail.slug)) return;
+          if (nonOlympicsSlug.includes(group.data.getLXP.promoRail.slug))
+            return;
 
-        const lives = group.data.getLXP.promoRail.items.map((stream) => {
-          const currentlyAiring =
-            new Date(stream.startDate) < new Date() &&
-            new Date(stream.endDate) > new Date();
+          const lives = group.data.getLXP.promoRail.items.map((stream) => {
+            const currentlyAiring =
+              new Date(stream.startDate) < new Date() &&
+              new Date(stream.endDate) > new Date();
 
-          return currentlyAiring ? stream : undefined;
-        });
+            return currentlyAiring
+              ? {
+                  ...stream,
+                  sportName: group.data.getLXP.stream.display.tagline
+                }
+              : undefined;
+          });
 
-        eventsLive.push(...lives);
+          eventsLive.push(...lives);
+        })
+      );
 
-        if (index === data.getLXP.switcherRail.length - 1) {
-          setEventsLive(eventsLive);
-        }
-      });
+      setEventsLive(eventsLive);
+
+      console.log({ programsLive, eventsLive });
     };
 
     const intervalId = setInterval(checkTextInFrame, 15000);
@@ -326,12 +378,26 @@ const Player: FC<Props> = ({ slug }) => {
                 labelId="demo-simple-select-label"
                 id="demo-simple-select"
                 label="Currently Live"
+                onChange={(e) => {
+                  window.player?.get(currentSlug)?.destroy();
+                  setFinished(false);
+                  setLoaded(false);
+                  setCurrentSlug(e.target.value as string);
+                }}
               >
+                {programsLive.filter((item) => item !== undefined).length >
+                  0 && <MenuItem disabled>Channels</MenuItem>}
                 {programsLive.map((program) => {
                   if (!program) return;
 
+                  const alreadyOpen = window.player?.has(program.slug);
+
                   return (
-                    <MenuItem key={program.slug} value={program.slug}>
+                    <MenuItem
+                      key={program.slug}
+                      value={program.slug}
+                      disabled={alreadyOpen}
+                    >
                       {program.name} -{" "}
                       {
                         program.airings?.find((airing) => {
@@ -342,18 +408,44 @@ const Player: FC<Props> = ({ slug }) => {
                           return startDate < now && endDate > now;
                         })?.title
                       }
+                      {alreadyOpen ? " (already open)" : ""}
                     </MenuItem>
                   );
                 })}
-                {eventsLive.map((event) => {
-                  if (!event) return;
 
-                  return (
-                    <MenuItem key={event.slug} value={event.slug}>
-                      {event.displayName} - {event.subtitle}
-                    </MenuItem>
-                  );
-                })}
+                {eventsLive.filter((item) => item !== undefined).length > 0 && (
+                  <MenuItem disabled>Live events</MenuItem>
+                )}
+                {eventsLive
+                  .sort((a, b) => {
+                    if (!a?.sportName || !b?.sportName) return 0;
+                    if (a.sportName < b.sportName) {
+                      return -1;
+                    }
+                    if (a.sportName > b.sportName) {
+                      return 1;
+                    }
+                    return 0;
+                  })
+                  .map((event) => {
+                    if (!event) return;
+
+                    const alreadyOpen = window.player?.has(event.slug);
+
+                    return (
+                      <MenuItem
+                        key={event.slug}
+                        value={event.slug}
+                        disabled={alreadyOpen}
+                      >
+                        <Typography>
+                          <b>{event.sportName}</b> | {event.displayName} -{" "}
+                          {event.subtitle}
+                          {alreadyOpen ? " (already open)" : ""}
+                        </Typography>
+                      </MenuItem>
+                    );
+                  })}
 
                 {eventsLive.filter((item) => item !== undefined).length === 0 &&
                   programsLive.filter((item) => item !== undefined).length ===

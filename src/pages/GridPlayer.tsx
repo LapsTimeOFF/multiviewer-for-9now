@@ -7,7 +7,7 @@ import { useParams } from "react-router-dom";
 const GridPlayer = () => {
   const [open, setOpen] = useState(true);
   const [draggable, setDraggable] = useState(false);
-  const [slug, setSlug] = useState<string[]>([]);
+  const [slug, setSlug] = useState<Map<string, boolean>>(new Map());
   const [numRows, setNumRows] = useState<number>(0);
   const [numCols, setNumCols] = useState<number>(0);
   const { data } = useParams<{ data: string }>();
@@ -15,6 +15,10 @@ const GridPlayer = () => {
 
   const handleClose = () => {
     setOpen(false);
+  };
+
+  const addSlugToList = (key: string, value: boolean) => {
+    setSlug((prevMap) => new Map(prevMap.set(key, value)));
   };
 
   useEffect(() => {
@@ -25,12 +29,14 @@ const GridPlayer = () => {
       const numRows = Math.floor(Math.sqrt(slugs.length));
       const numCols = Math.ceil(slugs.length / numRows);
 
-      setSlug(slugs);
+      slugs.forEach((slug) => addSlugToList(slug, true));
+
       setNumRows(numRows);
       setNumCols(numCols);
     };
 
     fetchSlugs();
+    window.player = new Map();
   }, [data]);
 
   return (
@@ -51,7 +57,7 @@ const GridPlayer = () => {
             </Typography>
           </div>
         )}
-        {slug.map((slug) => (
+        {Array.from(slug).map(([slug]) => (
           <PlayerSlot
             key={slug}
             slug={slug}
