@@ -22,6 +22,7 @@ import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import Channel from "@/components/Channel";
 import LiveEventGroup from "@/components/LiveEventGroup";
 import useSWR from "swr";
+import { useNavigate } from "react-router-dom";
 
 const fetchLiveExperience = async () => {
   const config = await window.mv.config.get();
@@ -46,8 +47,10 @@ function App() {
   const [token, setToken] = useState("");
   const [open, setOpen] = useState(false);
   const [liveFilter, setLiveFilter] = useState(false);
-  const [olypicsFilter, setOlypicsFilter] = useState(false);
+  const [olympicsFilter, setOlympicsFilter] = useState(false);
   const [gridList, setGridList] = useState<string[]>([]);
+
+  const navigate = useNavigate();
 
   const [config, setConfig] = useState<ConfigSchema>({});
   const { data: liveExperience, isLoading } = useSWR<
@@ -183,6 +186,13 @@ function App() {
             mt: 2
           }}
         >
+          <Button
+            onClick={() => {
+              navigate("/schedule");
+            }}
+          >
+            Schedule
+          </Button>
           <Stack direction="row" spacing={2}>
             <FilterAltIcon />
             <FormControlLabel
@@ -199,9 +209,9 @@ function App() {
             <FormControlLabel
               control={
                 <Checkbox
-                  value={olypicsFilter}
+                  value={olympicsFilter}
                   onChange={(e) => {
-                    setOlypicsFilter(e.target.checked);
+                    setOlympicsFilter(e.target.checked);
                   }}
                 />
               }
@@ -250,7 +260,7 @@ function App() {
                 key={r.id}
                 gridList={gridList}
                 setGridList={setGridList}
-                olympicsFilter={olypicsFilter}
+                olympicsFilter={olympicsFilter}
               />
             ))}
 
@@ -272,7 +282,7 @@ function App() {
                 gridList={gridList}
                 setGridList={setGridList}
                 liveFilter={liveFilter}
-                olympicsFilter={olypicsFilter}
+                olympicsFilter={olympicsFilter}
               />
             ))}
 

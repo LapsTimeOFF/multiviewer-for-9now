@@ -6,6 +6,7 @@ import "./styles/index.css";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import { createHashRouter, RouterProvider } from "react-router-dom";
 import GridPlayer from "./pages/GridPlayer";
+import Schedule from "./pages/Schedule";
 
 const theme = createTheme({
   palette: {
@@ -21,6 +22,10 @@ const router = createHashRouter([
   {
     path: "/grid/:data",
     element: <GridPlayer />
+  },
+  {
+    path: "/schedule",
+    element: <Schedule />
   }
 ]);
 
