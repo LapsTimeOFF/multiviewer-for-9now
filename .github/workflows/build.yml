@@ -24,7 +24,12 @@ jobs:
         run: npm install
 
       - name: Build Release Files
-        run: npm run build
+        run: |
+          if [ ${{ matrix.os }} == 'macos-latest' ]; then
+            npm run build --universal
+          else
+            npm run build
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
