@@ -58,12 +58,13 @@ const GridPlayer = () => {
             </Typography>
           </div>
         )}
-        {Array.from(slug).map(([slug]) => (
+        {Array.from(slug).map(([slug], i) => (
           <PlayerSlot
             key={slug}
             slug={slug}
             numRows={numRows}
             numCols={numCols}
+            index={i}
           />
         ))}
       </Grid>
@@ -81,9 +82,10 @@ type Props = {
   slug: string;
   numRows: number;
   numCols: number;
+  index: number;
 };
 
-export const PlayerSlot: FC<Props> = ({ slug, numRows, numCols }) => {
+export const PlayerSlot: FC<Props> = ({ slug, numRows, numCols, index }) => {
   return (
     <Grid
       item
@@ -94,7 +96,7 @@ export const PlayerSlot: FC<Props> = ({ slug, numRows, numCols }) => {
         margin: 0
       }}
     >
-      <Player slug={slug} />
+      <Player slug={slug} index={index} />
     </Grid>
   );
 };

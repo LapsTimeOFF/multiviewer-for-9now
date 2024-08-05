@@ -26,6 +26,7 @@ import Tesseract from "tesseract.js";
 import { GetLiveExperience, SwitcherRail } from "shared/getLiveExperienceTypes";
 import { LiveExperienceGroup } from "shared/LXPGroupTypes";
 import { nonOlympicsSlug } from "./LiveEventGroup";
+import { useHotkeys } from "react-hotkeys-hook";
 
 async function initPlayer(
   manifestUri: string,
@@ -92,9 +93,10 @@ function onError(error: any) {
 
 type Props = {
   slug: string;
+  index: number;
 };
 
-const Player: FC<Props> = ({ slug }) => {
+const Player: FC<Props> = ({ slug, index }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoElement = useRef<HTMLVideoElement>(null);
   const uiContainer = useRef<HTMLDivElement>(null);
@@ -131,6 +133,20 @@ const Player: FC<Props> = ({ slug }) => {
   >([]);
   const [hover, setHover] = useState(false);
   const [open, setOpen] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  if (!(index + 1 > 9))
+    useHotkeys(`${index + 1}`, () => {
+      if (videoElement.current) {
+        if (!fullscreen && videoElement.current.requestFullscreen) {
+          videoElement.current.requestFullscreen();
+          setFullscreen(true);
+        } else if (fullscreen && document.exitFullscreen) {
+          document.exitFullscreen();
+          setFullscreen(false);
+        }
+      }
+    });
 
   const fetchManifest = useCallback(async () => {
     const token = (await window.mv.config.get()).token;
